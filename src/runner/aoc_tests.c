@@ -20,7 +20,6 @@ void aoc_tests_insert_test(aoc_tests_t * tests, aoc_test_t test)
         return;
     }
     memcpy(&tests->tests[tests->num_tests], &test, sizeof(aoc_test_t));
-    printf("copied %s to %s\n", test.extra_args[0], tests->tests[tests->num_tests].extra_args[0]);
     tests->num_tests++;
 }
 

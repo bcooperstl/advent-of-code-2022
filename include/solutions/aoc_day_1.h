@@ -25,6 +25,6 @@ typedef struct day_1_elves day_1_elves_t;
 //static int read_and_parse_input(char * filename, day_1_elves_t * elves);
 
 void day_1_part_1(char * filename, extra_args_t * extra_args, char * result);
-//void day_1_part2(char * filename, extra_args_t * extra_args, char * result);
+void day_1_part_2(char * filename, extra_args_t * extra_args, char * result);
 
 #endif

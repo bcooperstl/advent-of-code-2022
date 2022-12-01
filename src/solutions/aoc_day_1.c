@@ -77,7 +77,7 @@ int read_and_parse_input(char * filename, day_1_elves_t * elves)
         }
         current = current->next;
     }
-    elves->num_elves = current_elf;
+    elves->num_elves = current_elf + 1;
     file_data_cleanup(&fd);
     return TRUE;
 }
@@ -111,5 +111,54 @@ void day_1_part_1(char * filename, extra_args_t * extra_args, char * result)
         }
     }
     snprintf(result, MAX_RESULT_LENGTH+1, "%ld", largest_calories);
+    return;
+}
+
+void day_1_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_1_elves_t elves;
+    long largest_calories[3] = {0,0,0};
+    long current_calories;
+    if (read_and_parse_input(filename, &elves) == FALSE)
+    {
+        fprintf(stderr, "Error reading in the data from %s\n", filename);
+        return;
+    }
+    for (int i=0; i<elves.num_elves; i++)
+    {
+        current_calories = 0;
+        for (int j=0; j<elves.elves[i].num_calories; j++)
+        {
+            current_calories += elves.elves[i].calories[j];
+        }
+#ifdef DEBUG_DAY_1
+        printf("Elf %d has %ld total calories\n", i, current_calories); 
+#endif
+        if (current_calories > largest_calories[0])
+        {
+            largest_calories[2] = largest_calories[1];
+            largest_calories[1] = largest_calories[0];
+            largest_calories[0] = current_calories;
+#ifdef DEBUG_DAY_1
+        printf("  This is the new first largest calories resulting in %ld %ld %ld\n", largest_calories[0], largest_calories[1], largest_calories[2]); 
+#endif
+        }
+        else if (current_calories > largest_calories[1])
+        {
+            largest_calories[2] = largest_calories[1];
+            largest_calories[1] = current_calories;
+#ifdef DEBUG_DAY_1
+        printf("  This is the new second largest calories resulting in %ld %ld %ld\n", largest_calories[0], largest_calories[1], largest_calories[2]); 
+#endif
+        }
+        else if (current_calories > largest_calories[2])
+        {
+            largest_calories[2] = current_calories;
+#ifdef DEBUG_DAY_1
+        printf("  This is the new third largest calories resulting in %ld %ld %ld\n", largest_calories[0], largest_calories[1], largest_calories[2]); 
+#endif
+        }
+    }
+    snprintf(result, MAX_RESULT_LENGTH+1, "%ld", largest_calories[0] + largest_calories[1] + largest_calories[2]);
     return;
 }

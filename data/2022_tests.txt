@@ -1,0 +1,5 @@
+#format is day,part,filename,expected result,any extra arguments (comma-separated)
+1,1,test_cases/day1_test1.txt,24000
+1,1,day1_input.txt,68467
+1,2,test_cases/day1_test1.txt,45000
+1,2,day1_input.txt,203420

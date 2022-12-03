@@ -5,4 +5,6 @@
 1,2,day1_input.txt,203420
 2,1,test_cases/day2_test1.txt,15
 2,1,day2_input.txt,11063
-2,1,test_cases/day2_test1.txt,12
+2,2,test_cases/day2_test1.txt,12
+2,2,day2_input.txt,10349
+

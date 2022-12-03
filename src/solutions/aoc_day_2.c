@@ -86,7 +86,9 @@ void day_2_part_1(char * filename, extra_args_t * extra_args, char * result)
             {
                 int curr = points_for_round(td->token[0], td->token[2]);
                 sum += curr;
+#ifdef DEBUG_DAY2
                 printf("Line %d has elf %c me %c resulting in %d points raising total to %d\n", line_number, td->token[0], td->token[2], curr, sum);
+#endif
             }
             else
             {

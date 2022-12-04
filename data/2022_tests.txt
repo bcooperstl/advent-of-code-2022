@@ -7,4 +7,4 @@
 2,1,day2_input.txt,11063
 2,2,test_cases/day2_test1.txt,12
 2,2,day2_input.txt,10349
-
+3,1,test_cases/day3_test1.txt,157

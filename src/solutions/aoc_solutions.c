@@ -5,6 +5,7 @@
 // includes for each day will go here
 #include "aoc_day_1.h"
 #include "aoc_day_2.h"
+#include "aoc_day_3.h"
 
 #define DAY_INDEX(day) (day -1)
 #define PART_INDEX(part) (part-1)
@@ -30,6 +31,8 @@ void initialize_solutions(aoc_solutions_t * solutions)
     solutions->solutions[DAY_INDEX(1)][PART_INDEX(2)] = day_1_part_2;
     solutions->solutions[DAY_INDEX(2)][PART_INDEX(1)] = day_2_part_1;
     solutions->solutions[DAY_INDEX(2)][PART_INDEX(2)] = day_2_part_2;
+    solutions->solutions[DAY_INDEX(3)][PART_INDEX(1)] = day_3_part_1;
+    solutions->solutions[DAY_INDEX(3)][PART_INDEX(2)] = day_3_part_2;
 }
 
 int run_solution(aoc_solutions_t * solutions, int day, int part, char * filename, extra_args_t * extra_args, char * result)

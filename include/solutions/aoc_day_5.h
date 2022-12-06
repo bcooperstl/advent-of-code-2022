@@ -33,6 +33,6 @@ struct day_5_moves
 typedef struct day_5_moves day_5_moves_t;
 
 void day_5_part_1(char * filename, extra_args_t * extra_args, char * result);
-//void day_5_part_2(char * filename, extra_args_t * extra_args, char * result);
+void day_5_part_2(char * filename, extra_args_t * extra_args, char * result);
 
 #endif

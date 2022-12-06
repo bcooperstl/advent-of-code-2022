@@ -15,3 +15,4 @@
 4,1,day4_input.txt,547
 4,2,test_cases/day4_test1.txt,4
 4,2,day4_input.txt,843
+5,1,test_cases/day5_test1.txt,CMZ

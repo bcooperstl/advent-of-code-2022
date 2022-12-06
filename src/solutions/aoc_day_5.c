@@ -133,6 +133,29 @@ static int read_and_parse_input(char * filename, day_5_stacks_t * stacks, day_5_
     return TRUE;
 }
 
+static void generate_output_from_top_chars(day_5_stacks_t * stacks, char * output)
+{
+    for (int i=0; i<stacks->num_stacks; i++)
+    {
+        output[i] = stacks->crates[i][strlen(stacks->crates[i])-1];
+    }
+    output[stacks->num_stacks]='\0';
+}
+
+static void perform_move_one_crate_at_a_time(day_5_stacks_t * stacks, day_5_move_t * move)
+{
+    for (int i=0; i<move->count; i++)
+    {
+        stacks->crates[move->to-1][strlen(stacks->crates[move->to-1])] = stacks->crates[move->from-1][strlen(stacks->crates[move->from-1])-1];
+        stacks->crates[move->from-1][strlen(stacks->crates[move->from-1])-1] = '\0';
+    }
+#ifdef DEBUG_DAY_5
+    printf("After moving %d from %d to %d one at a time, the stacks are:\n", move->count, move->from, move->to);
+    display_stacks(stacks);
+#endif
+
+}
+
 void day_5_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     int sum = 0;
@@ -140,12 +163,22 @@ void day_5_part_1(char * filename, extra_args_t * extra_args, char * result)
     day_5_stacks_t stacks;
     day_5_moves_t moves;
     
+    char output[MAX_DAY_5_STACKS+1];
+    
     if (read_and_parse_input(filename, &stacks, &moves) != TRUE)
     {
         fprintf(stderr, "!! Error parsing input\n");
         return;
     }
     
-    snprintf(result, MAX_RESULT_LENGTH+1, "%ld", 5);
+    for (int i=0; i<moves.num_moves; i++)
+    {
+        perform_move_one_crate_at_a_time(&stacks, &moves.moves[i]);
+    }
+    
+    
+    generate_output_from_top_chars(&stacks, output);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%s", output);
     return;
 }

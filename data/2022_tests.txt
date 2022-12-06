@@ -17,3 +17,5 @@
 4,2,day4_input.txt,843
 5,1,test_cases/day5_test1.txt,CMZ
 5,1,day5_input.txt,ZBDRNPMVH
+5,2,test_cases/day5_test1.txt,MCD
+5,2,day5_input.txt,WDLPFNNNB

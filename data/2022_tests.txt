@@ -24,3 +24,4 @@
 6,1,test_cases/day6_test3.txt,6
 6,1,test_cases/day6_test4.txt,10
 6,1,test_cases/day6_test5.txt,11
+6,1,day6_input.txt,1912

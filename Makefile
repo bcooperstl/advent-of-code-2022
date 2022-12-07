@@ -70,12 +70,18 @@ build/solutions/aoc_day_5.o: src/solutions/aoc_day_5.c  \
 	include/common/constants.h
 	gcc ${CFLAGS} -o build/solutions/aoc_day_5.o -c src/solutions/aoc_day_5.c
 
+build/solutions/aoc_day_6.o: src/solutions/aoc_day_6.c  \
+	include/solutions/aoc_day_6.h \
+	include/common/constants.h
+	gcc ${CFLAGS} -o build/solutions/aoc_day_6.o -c src/solutions/aoc_day_6.c
+
 bin/lib/libsolutions.a: build/solutions/aoc_solutions.o  \
 	build/solutions/aoc_day_1.o \
 	build/solutions/aoc_day_2.o \
 	build/solutions/aoc_day_3.o \
 	build/solutions/aoc_day_4.o \
 	build/solutions/aoc_day_5.o \
+	build/solutions/aoc_day_6.o \
 	build/solutions/aoc_day_0.o
 	ar rcs bin/lib/libsolutions.a $^
 
@@ -105,6 +111,7 @@ clean:
 	build/solutions/aoc_day_3.o  \
 	build/solutions/aoc_day_4.o  \
 	build/solutions/aoc_day_5.o \
+	build/solutions/aoc_day_6.o \
 	build/aoc.o  \
 	bin/lib/librunner.a  \
 	bin/lib/libsolutions.a  \
@@ -121,6 +128,7 @@ all: build/runner/file_utils.o  \
 	build/solutions/aoc_day_3.o  \
 	build/solutions/aoc_day_4.o  \
 	build/solutions/aoc_day_5.o \
+	build/solutions/aoc_day_6.o \
 	build/aoc.o  \
 	bin/lib/librunner.a  \
 	bin/lib/libsolutions.a  \

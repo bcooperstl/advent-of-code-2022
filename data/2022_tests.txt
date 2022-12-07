@@ -19,3 +19,15 @@
 5,1,day5_input.txt,ZBDRNPMVH
 5,2,test_cases/day5_test1.txt,MCD
 5,2,day5_input.txt,WDLPFNNNB
+6,1,test_cases/day6_test1.txt,7
+6,1,test_cases/day6_test2.txt,5
+6,1,test_cases/day6_test3.txt,6
+6,1,test_cases/day6_test4.txt,10
+6,1,test_cases/day6_test5.txt,11
+6,1,day6_input.txt,1912
+6,2,test_cases/day6_test1.txt,19
+6,2,test_cases/day6_test2.txt,23
+6,2,test_cases/day6_test3.txt,23
+6,2,test_cases/day6_test4.txt,29
+6,2,test_cases/day6_test5.txt,26
+6,2,day6_input.txt,2122

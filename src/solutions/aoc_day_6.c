@@ -44,3 +44,55 @@ void day_6_part_1(char * filename, extra_args_t * extra_args, char * result)
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", marker);
     return;
 }
+
+void day_6_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    int marker = 0;
+    file_data_t fd;
+    
+    // read in the input file; no delimiters
+    file_data_init(&fd);
+    file_data_read_file(&fd, filename, "-,", 2, '\0', '\0');
+    if (fd.num_lines == 0)
+    {
+        fprintf(stderr, "Error reading in data from %s\n", filename);
+        file_data_cleanup(&fd);
+        return;
+    }
+    
+    line_data_t * ld = fd.head_line;
+    token_data_t * td = ld->head_token;
+    char * input = td->token;
+    
+    for (int i=13; i<strlen(input); i++)
+    {
+        int match = FALSE;
+        for (int j=i-13; j<i; j++)
+        {
+            // if we already have a match, short circuit to stop this
+            if (match == TRUE)
+            {
+                break;
+            }
+            for (int k=j+1; k<=i; k++)
+            {
+                if (input[j] == input[k])
+                {
+                    match = TRUE;
+                    break;
+                }
+            }
+        }
+        
+        if (match == FALSE)
+        {
+            marker = i+1;
+            break;
+        }
+    }
+    
+    file_data_cleanup(&fd);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", marker);
+    return;
+}

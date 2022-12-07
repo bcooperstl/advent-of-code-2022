@@ -30,3 +30,4 @@
 6,2,test_cases/day6_test3.txt,23
 6,2,test_cases/day6_test4.txt,29
 6,2,test_cases/day6_test5.txt,26
+6,2,day6_input.txt,2122

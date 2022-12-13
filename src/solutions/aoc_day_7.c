@@ -21,6 +21,9 @@ static void init_directory(day_7_directory_t * dir, char * name, day_7_directory
     dir->total_dirs = NUM_DIRS_ALLOC;
     dir->used_dirs = 0;
     dir->parent = parent;
+#ifdef DEBUG_DAY_7
+    printf("Initialized directory %s with %d files and %d directories\n", name, NUM_FILES_ALLOC, NUM_DIRS_ALLOC);
+#endif
 }
 
 static void cleanup_directory(day_7_directory_t * dir)
@@ -33,6 +36,48 @@ static void cleanup_directory(day_7_directory_t * dir)
     free(dir->dirs);
 }
 
+static void add_file(day_7_directory_t * dir, char * filename, int size)
+{
+    if (dir->total_files == dir->used_files)
+    {
+#ifdef DEBUG_DAY_7
+        printf("Expanding %s from %d files to %d files\n", dir->name, dir->total_files, dir->total_files+NUM_FILES_ALLOC);
+#endif
+        day_7_file_t * new_files = (day_7_file_t *)malloc((dir->total_files + NUM_FILES_ALLOC) * sizeof(day_7_file_t));
+        memcpy(new_files, dir->files, dir->total_files * sizeof(day_7_file_t));
+        free(dir->files);
+        dir->files = new_files;
+        dir->total_files += NUM_FILES_ALLOC;
+    }
+#ifdef DEBUG_DAY_7
+    printf("Setting file %d in dir %s to %s\n", dir->used_files, dir->name, filename);
+#endif
+    strncpy(dir->files[dir->used_files].filename, filename, DAY_7_NAME_LEN+1);
+    dir->files[dir->used_files].filename[DAY_7_NAME_LEN] = '\0';
+    dir->files[dir->used_files].size = size;
+    dir->files[dir->used_files].parent = dir;
+    dir->used_files++;
+}
+
+static void add_directory(day_7_directory_t * dir, char * dirname)
+{
+    if (dir->total_dirs == dir->used_dirs)
+    {
+#ifdef DEBUG_DAY_7
+        printf("Expanding %s from %d dirs to %d dirs\n", dir->name, dir->total_dirs, dir->total_dirs+NUM_DIRS_ALLOC);
+#endif
+        day_7_directory_t * new_dirs = (day_7_directory_t *)malloc((dir->total_dirs + NUM_DIRS_ALLOC) * sizeof(day_7_directory_t));
+        memcpy(new_dirs, dir->dirs, dir->total_dirs * sizeof(day_7_directory_t));
+        free(dir->dirs);
+        dir->dirs = new_dirs;
+        dir->total_dirs += NUM_DIRS_ALLOC;
+    }
+#ifdef DEBUG_DAY_7
+    printf("Setting file %d in dir %s to %s\n", dir->used_files, dir->name, filename);
+#endif
+    init_directory(&dir->dirs[dir->used_dirs], dirname, dir);
+    dir->used_dirs++;
+}
 
 //static int read_and_parse_input(char * filename, day_7_stacks_t * stacks, day_7_moves_t * moves)
 //{

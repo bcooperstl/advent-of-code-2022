@@ -23,6 +23,17 @@ static void init_directory(day_7_directory_t * dir, char * name, day_7_directory
     dir->parent = parent;
 }
 
+static void cleanup_directory(day_7_directory_t * dir)
+{
+    for (int i=0; i<dir->used_dirs; i++)
+    {
+        cleanup_directory(&dir->dirs[i]);
+    }
+    free(dir->files);
+    free(dir->dirs);
+}
+
+
 //static int read_and_parse_input(char * filename, day_7_stacks_t * stacks, day_7_moves_t * moves)
 //{
 //    file_data_t fd_no_delim;
@@ -161,5 +172,8 @@ void day_7_part_1(char * filename, extra_args_t * extra_args, char * result)
     dump_directory(&slash, 0);
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%s", "");
+    
+    cleanup_directory(&slash);
+    
     return;
 }

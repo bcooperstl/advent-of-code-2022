@@ -198,15 +198,56 @@ static int parse_input_and_build_tree(char * filename, day_7_directory_t * slash
     return TRUE;
 }
 
+static void calc_total_size(day_7_directory_t * dir)
+{
+    dir->total_size = 0;
+    for (int i=0; i<dir->used_files; i++)
+    {
+        dir->total_size += dir->files[i].size;
+    }
+    for (int i=0; i<dir->used_dirs; i++)
+    {
+        calc_total_size(&dir->dirs[i]);
+        dir->total_size += dir->dirs[i].total_size;
+    }
+#ifdef DEBUG_DAY_7
+    printf("Directory %s has total size %d\n", dir->dirname, dir->total_size);
+#endif
+}
+
+static long sum_for_part_1(day_7_directory_t * dir)
+{
+    long my_sum = 0;
+    if (dir->total_size <= 100000)
+    {
+        my_sum += dir->total_size;
+    }
+    for (int i=0; i<dir->used_dirs; i++)
+    {
+        my_sum += sum_for_part_1(&dir->dirs[i]);
+    }
+    return my_sum;
+}
+
 void day_7_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     day_7_directory_t slash;
     init_directory(&slash, "/", NULL);
     dump_directory(&slash, 0);
     
-    parse_input_and_build_tree(filename, &slash);
+    if (parse_input_and_build_tree(filename, &slash) != TRUE)
+    {
+        fprintf(stderr, "Error parsing input %s\n", filename);
+    }
     
-    snprintf(result, MAX_RESULT_LENGTH+1, "%s", "");
+#ifdef DEBUG_DAY_7
+    dump_directory(&slash, 0);
+#endif
+
+    calc_total_size(&slash);
+    long total_sum = sum_for_part_1(&slash);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%ld", total_sum);
     
     cleanup_directory(&slash);
     

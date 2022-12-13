@@ -36,12 +36,26 @@ static void cleanup_directory(day_7_directory_t * dir)
     free(dir->dirs);
 }
 
+
+static void dump_directory(day_7_directory_t * dir, int level)
+{
+    printf("%*s%s\n", level*2, "", dir->dirname);
+    for (int i=0; i<dir->used_files; i++)
+    {
+        printf("%*s%s %d\n", level*2+2, "", dir->files[i].filename, dir->files[i].size);
+    }
+    for (int i=0; i<dir->used_dirs; i++)
+    {
+        dump_directory(&dir->dirs[i], level+1);
+    }
+}
+
 static void add_file(day_7_directory_t * dir, char * filename, int size)
 {
     if (dir->total_files == dir->used_files)
     {
 #ifdef DEBUG_DAY_7
-        printf("Expanding %s from %d files to %d files\n", dir->name, dir->total_files, dir->total_files+NUM_FILES_ALLOC);
+        printf("Expanding %s from %d files to %d files\n", dir->dirname, dir->total_files, dir->total_files+NUM_FILES_ALLOC);
 #endif
         day_7_file_t * new_files = (day_7_file_t *)malloc((dir->total_files + NUM_FILES_ALLOC) * sizeof(day_7_file_t));
         memcpy(new_files, dir->files, dir->total_files * sizeof(day_7_file_t));
@@ -50,7 +64,7 @@ static void add_file(day_7_directory_t * dir, char * filename, int size)
         dir->total_files += NUM_FILES_ALLOC;
     }
 #ifdef DEBUG_DAY_7
-    printf("Setting file %d in dir %s to %s\n", dir->used_files, dir->name, filename);
+    printf("Setting file %d in dir %s to %s\n", dir->used_files, dir->dirname, filename);
 #endif
     strncpy(dir->files[dir->used_files].filename, filename, DAY_7_NAME_LEN+1);
     dir->files[dir->used_files].filename[DAY_7_NAME_LEN] = '\0';
@@ -64,7 +78,7 @@ static void add_directory(day_7_directory_t * dir, char * dirname)
     if (dir->total_dirs == dir->used_dirs)
     {
 #ifdef DEBUG_DAY_7
-        printf("Expanding %s from %d dirs to %d dirs\n", dir->name, dir->total_dirs, dir->total_dirs+NUM_DIRS_ALLOC);
+        printf("Expanding %s from %d dirs to %d dirs\n", dir->dirname, dir->total_dirs, dir->total_dirs+NUM_DIRS_ALLOC);
 #endif
         day_7_directory_t * new_dirs = (day_7_directory_t *)malloc((dir->total_dirs + NUM_DIRS_ALLOC) * sizeof(day_7_directory_t));
         memcpy(new_dirs, dir->dirs, dir->total_dirs * sizeof(day_7_directory_t));
@@ -73,141 +87,115 @@ static void add_directory(day_7_directory_t * dir, char * dirname)
         dir->total_dirs += NUM_DIRS_ALLOC;
     }
 #ifdef DEBUG_DAY_7
-    printf("Setting file %d in dir %s to %s\n", dir->used_files, dir->name, filename);
+    printf("Setting file %d in dir %s to %s\n", dir->used_dirs, dir->dirname, dirname);
 #endif
     init_directory(&dir->dirs[dir->used_dirs], dirname, dir);
     dir->used_dirs++;
 }
 
-//static int read_and_parse_input(char * filename, day_7_stacks_t * stacks, day_7_moves_t * moves)
-//{
-//    file_data_t fd_no_delim;
-//    line_data_t * line_no_delim;
-//    token_data_t * token_no_delim;
-//    
-//    file_data_t fd_delim;
-//    line_data_t * line_delim;
-//    token_data_t * token_delim;
-//    
-//    int max_stack_size, curr_stack_size;
-//    
-//    // read in the input file with no delimiters
-//    file_data_init(&fd_no_delim);
-//    file_data_read_file(&fd_no_delim, filename, "", 0, '\0', '\0');
-//    if (fd_no_delim.num_lines == 0)
-//    {
-//        fprintf(stderr, "Error reading in data from %s\n", filename);
-//        file_data_cleanup(&fd_no_delim);
-//        return FALSE;
-//    }
-//
-//    // read in the input file again with space delimiters
-//    file_data_init(&fd_delim);
-//    file_data_read_file(&fd_delim, filename, " ", 1, '\0', '\0');
-//    if (fd_delim.num_lines == 0)
-//    {
-//        fprintf(stderr, "Error reading in data from %s\n", filename);
-//        file_data_cleanup(&fd_delim);
-//        file_data_cleanup(&fd_no_delim);
-//        return FALSE;
-//    }
-//
-//    // initialize data structures
-//    stacks->num_stacks = 0;
-//    for (int i=0; i<MAX_DAY_7_STACKS; i++)
-//    {
-//        memset(stacks->crates[i], '\0', MAX_DAY_7_STACK_DEPTH + 1);
-//    }
-//    
-//    moves->num_moves = 0;
-//    
-//    // determine number of stacks
-//    line_no_delim = fd_no_delim.head_line;
-//    token_no_delim = line_no_delim->head_token;
-//    stacks->num_stacks = (strlen(token_no_delim->token) + 1)/4;
-//#ifdef DEBUG_DAY_7
-//    printf("The input file has %d stacks\n", stacks->num_stacks);
-//#endif
-//    
-//    // find the highest stack depth
-//    line_delim = fd_delim.head_line;
-//    
-//    max_stack_size = 0;
-//    
-//    token_delim = line_delim->head_token->next;
-//    while (token_delim->token[0] != '1')
-//    {
-//#ifdef DEBUG_DAY_7
-//        printf("Input token is [%s]\n", token_delim->token);
-//#endif
-//        max_stack_size++;
-//        line_delim = line_delim->next;
-//        token_delim = line_delim->head_token->next;
-//    }
-//#ifdef DEBUG_DAY_7
-//    printf("The maximum stack depth is %d\n", max_stack_size);
-//#endif
-//
-//    // load the values to the stacks
-//    for (curr_stack_size = max_stack_size; curr_stack_size > 0; curr_stack_size--)
-//    {
-//        for (int col=0; col < stacks->num_stacks; col++)
-//        {
-//            if (token_no_delim->token[4*col+1] != ' ')
-//            {
-//                stacks->crates[col][curr_stack_size-1] = token_no_delim->token[4*col+1];
-//#ifdef DEBUG_DAY_7
-//                printf("Set stack %d depth %d to %c\n", col+1, curr_stack_size-1, stacks->crates[col][curr_stack_size-1]);
-//#endif
-//            }
-//        }
-//        line_no_delim = line_no_delim->next;
-//        token_no_delim = line_no_delim->head_token;
-//    }
-//
-//#ifdef DEBUG_DAY_7
-//    printf("After loading, the current stacks are:\n");
-//    display_stacks(stacks);
-//#endif
-//    
-//    // load the moves; first have to advance line_delim twice to get to first move
-//    line_delim = line_delim->next->next;
-//    
-//    while (line_delim != NULL)
-//    {
-//        // count from col 2
-//        token_delim = line_delim->head_token->next;
-//        moves->moves[moves->num_moves].count = strtol(token_delim->token, NULL, 10);
-//        // 'from' from col 4
-//        token_delim = token_delim->next->next;
-//        moves->moves[moves->num_moves].from = strtol(token_delim->token, NULL, 10);
-//        // 'to' from col 6
-//        token_delim = token_delim->next->next;
-//        moves->moves[moves->num_moves].to = strtol(token_delim->token, NULL, 10);
-//#ifdef DEBUG_DAY_7
-//        printf("Move %d is moving %d crates from %d to %d\n", moves->num_moves+1, moves->moves[moves->num_moves].count, moves->moves[moves->num_moves].from, moves->moves[moves->num_moves].to);
-//#endif
-//        moves->num_moves++;
-//        line_delim = line_delim->next;
-//    }
-//    
-//    file_data_cleanup(&fd_no_delim);
-//    file_data_cleanup(&fd_delim);
-//    
-//    return TRUE;
-//}
-
-static void dump_directory(day_7_directory_t * dir, int level)
+static int parse_input_and_build_tree(char * filename, day_7_directory_t * slash)
 {
-    printf("%*s%s\n", level*2, "", dir->dirname);
-    for (int i=0; i<dir->used_files; i++)
+    day_7_directory_t * cwd = slash;
+
+#ifdef DEBUG_DAY_7_PARSE
+    printf("Parsing - set initial directory to /\n");
+#endif
+    file_data_t fd;
+    line_data_t * ld;
+    token_data_t * td;
+    
+    // read in the input file with space delimiters
+    file_data_init(&fd);
+    file_data_read_file(&fd, filename, " ", 1, '\0', '\0');
+    if (fd.num_lines == 0)
     {
-        printf("%*s %s %d\n", level*2+2, "", dir->files[i].filename, dir->files[i].size);
+        fprintf(stderr, "Error reading in data from %s\n", filename);
+        file_data_cleanup(&fd);
+        return FALSE;
     }
-    for (int i=0; i<dir->used_dirs; i++)
+
+    ld = fd.head_line;
+    while (ld != NULL)
     {
-        dump_directory(&dir->dirs[i], level+1);
+        td = ld->head_token;
+        if (strncmp(td->token, "$", 1) == 0) // line starts with $
+        {
+            if (strncmp(td->next->token, "cd", 2) == 0) // command is cd
+            {
+                char * target = td->next->next->token;
+                if (strncmp(target, "/", 1) == 0)
+                {
+#ifdef DEBUG_DAY_7_PARSE
+                    printf("Parsing - cd to /\n");
+#endif
+                    cwd = slash;
+                }
+                else if (strncmp(target, "..", 2) == 0)
+                {
+#ifdef DEBUG_DAY_7_PARSE
+                    printf("Parsing - cd to .. results in %s\n", cwd->parent);
+#endif
+                    cwd = cwd->parent;
+                }
+                else
+                {
+#ifdef DEBUG_DAY_7_PARSE
+                    printf("Parsing - cd to %s\n", target);
+#endif
+                    day_7_directory_t * subdir = NULL;
+                    for (int i=0; i<cwd->used_dirs; i++)
+                    {
+                        if (strncmp(target, cwd->dirs[i].dirname, DAY_7_NAME_LEN) == 0)
+                        {
+                            subdir = &cwd->dirs[i];
+                            break;
+                        }
+                    }
+                    if (subdir == NULL)
+                    {
+                        fprintf(stderr, "Subdirectory %s not found under %s\n", target, cwd->dirname);
+                        file_data_cleanup(&fd);
+                        return FALSE;
+                    }
+                    cwd = subdir;
+                }
+            }
+            else if (strncmp(td->next->token, "ls", 2) == 0) // command is ls
+            {
+#ifdef DEBUG_DAY_7_PARSE
+                printf("Parsing - ls under %s\n", cwd->dirname);
+#endif
+            }
+            else
+            {
+                fprintf(stderr, "Invalid command %s\n", td->next->token);
+                file_data_cleanup(&fd);
+                return FALSE;
+            }
+        }
+        else if (strncmp(td->token, "dir", 3) == 0)
+        {
+#ifdef DEBUG_DAY_7_PARSE
+            printf("Parsing - adding directory %s under %s\n", td->next->token, cwd->dirname);
+#endif
+            add_directory(cwd, td->next->token);
+        }
+        else
+        {
+#ifdef DEBUG_DAY_7_PARSE
+            printf("Parsing - adding file %s size %s under %s\n", td->next->token, td->token, cwd->dirname);
+#endif
+            add_file(cwd, td->next->token, strtol(td->token, NULL, 10));
+        }
+#ifdef DEBUG_DAY_7_PARSE
+        dump_directory(slash, 0);
+#endif
+        ld = ld->next;
     }
+
+    file_data_cleanup(&fd);
+    
+    return TRUE;
 }
 
 void day_7_part_1(char * filename, extra_args_t * extra_args, char * result)
@@ -215,6 +203,8 @@ void day_7_part_1(char * filename, extra_args_t * extra_args, char * result)
     day_7_directory_t slash;
     init_directory(&slash, "/", NULL);
     dump_directory(&slash, 0);
+    
+    parse_input_and_build_tree(filename, &slash);
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%s", "");
     

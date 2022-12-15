@@ -9,6 +9,9 @@
 #define NUM_FILES_ALLOC 2
 #define NUM_DIRS_ALLOC 1
 
+#define DISK_SIZE 70000000
+#define FREE_NEEDED 30000000
+
 static void init_directory(day_7_directory_t * dir, char * name, day_7_directory_t * parent)
 {
     strncpy(dir->dirname, name, DAY_7_NAME_LEN+1);
@@ -229,6 +232,37 @@ static long sum_for_part_1(day_7_directory_t * dir)
     return my_sum;
 }
 
+static void find_best_dir_to_delete(day_7_directory_t * parent, long min_to_free, day_7_directory_t ** best)
+{
+#ifdef DEBUG_DAY_7
+    printf("Checking for best directory to delete under %s\n", parent->dirname);
+#endif
+    // loop over 
+    for (int i=0; i<parent->used_dirs; i++)
+    {
+        if (parent->dirs[i].total_size >= min_to_free)
+        {
+            if (parent->dirs[i].total_size < (*best)->total_size)
+            {
+#ifdef DEBUG_DAY_7
+            printf("New best directory %s found with size %d\n", parent->dirs[i].dirname, parent->dirs[i].total_size);
+#endif
+                *best = &parent->dirs[i];
+            }
+            find_best_dir_to_delete(&parent->dirs[i], min_to_free, best);
+        }
+        else
+        {
+#ifdef DEBUG_DAY_7
+            printf("Skipping directory %s because size %d is less than min_to_free size of %d\n", parent->dirs[i].dirname, parent->dirs[i].total_size, min_to_free);
+#endif
+        }
+    }
+#ifdef DEBUG_DAY_7
+    printf("Done with %s\n", parent->dirname);
+#endif
+}
+
 void day_7_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     day_7_directory_t slash;
@@ -248,6 +282,42 @@ void day_7_part_1(char * filename, extra_args_t * extra_args, char * result)
     long total_sum = sum_for_part_1(&slash);
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%ld", total_sum);
+    
+    cleanup_directory(&slash);
+    
+    return;
+}
+
+void day_7_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_7_directory_t slash;
+    init_directory(&slash, "/", NULL);
+    dump_directory(&slash, 0);
+    
+    if (parse_input_and_build_tree(filename, &slash) != TRUE)
+    {
+        fprintf(stderr, "Error parsing input %s\n", filename);
+    }
+    
+#ifdef DEBUG_DAY_7
+    dump_directory(&slash, 0);
+#endif
+
+    calc_total_size(&slash);
+
+    long unused_space = DISK_SIZE - slash.total_size;
+    long min_to_free = FREE_NEEDED - unused_space;
+    
+#ifdef DEBUG_DAY_7
+    printf("There are %d of %d bytes used, leaving %d free.\nWe need to free up at least %d bytes to have %d free for update\n",
+            slash.total_size, DISK_SIZE, unused_space, min_to_free, FREE_NEEDED);
+#endif
+    
+    day_7_directory_t * best = &slash;
+    
+    find_best_dir_to_delete(&slash, min_to_free, &best);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%ld", best->total_size);
     
     cleanup_directory(&slash);
     

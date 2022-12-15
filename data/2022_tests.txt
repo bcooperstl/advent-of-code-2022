@@ -33,3 +33,5 @@
 6,2,day6_input.txt,2122
 7,1,test_cases/day7_test1.txt,95437
 7,1,day7_input.txt,1243729
+7,2,test_cases/day7_test1.txt,24933642
+7,2,day7_input.txt,4443914

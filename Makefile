@@ -5,7 +5,7 @@ DEBUG=
 #DEBUG+= -DDEBUG_DAY_8
 
 #If adding another include directory, be sure to add it here
-CFLAGS=-g ${DEBUG} -Iinclude/common -Iinclude/runner -Iinclude/solutions
+CFLAGS=-g ${DEBUG} -Iinclude/common -Iinclude/runner -Iinclude/screen -Iinclude/solutions
 
 .DEFAULT_GOAL := all
 
@@ -31,6 +31,14 @@ bin/lib/librunner.a: build/runner/aoc_test.o  \
 	build/runner/aoc_tests.o  \
 	build/runner/file_utils.o
 	ar rcs bin/lib/librunner.a build/runner/aoc_test.o build/runner/aoc_tests.o build/runner/file_utils.o
+
+# Screen libary - contains the screen functionality for game-of-life like problems
+build/screen/aoc_screen.o: src/screen/aoc_screen.c  \
+	include/screen/aoc_screen.h
+	gcc ${CFLAGS} -o build/screen/aoc_screen.o -c src/screen/aoc_screen.c
+
+bin/lib/libscreen.a: build/screen/aoc_screen.o
+	ar rcs bin/lib/libscreen.a build/screen/aoc_screen.o
 
 ## Solutions - These are the programs for the daily solutions
 build/solutions/aoc_solutions.o: src/solutions/aoc_solutions.c  \
@@ -108,14 +116,16 @@ build/aoc.o: src/aoc.c  \
 ##If adding a new library, be sure to add it in the correct order in the compile line
 bin/aoc: build/aoc.o  \
 	bin/lib/librunner.a \
+	bin/lib/libscreen.a \
 	bin/lib/libsolutions.a 
-	gcc ${CFLAGS} -o bin/aoc build/aoc.o -Lbin/lib -lsolutions -lrunner
+	gcc ${CFLAGS} -o bin/aoc build/aoc.o -Lbin/lib -lsolutions -lscreen -lrunner
 
 
 clean:
 	rm -f build/runner/file_utils.o  \
 	build/runner/aoc_test.o  \
 	build/runner/aoc_tests.o  \
+	build/screen/aoc_screen.o  \
 	build/solutions/aoc_solutions.o  \
 	build/solutions/aoc_day_0.o  \
 	build/solutions/aoc_day_1.o  \
@@ -128,6 +138,7 @@ clean:
 	build/solutions/aoc_day_8.o \
 	build/aoc.o  \
 	bin/lib/librunner.a  \
+	bin/lib/libscreen.a  \
 	bin/lib/libsolutions.a  \
 	bin/aoc
 
@@ -135,6 +146,7 @@ clean:
 all: build/runner/file_utils.o  \
 	build/runner/aoc_test.o  \
 	build/runner/aoc_tests.o  \
+	build/screen/aoc_screen.o  \
 	build/solutions/aoc_solutions.o  \
 	build/solutions/aoc_day_0.o  \
 	build/solutions/aoc_day_1.o  \
@@ -147,6 +159,7 @@ all: build/runner/file_utils.o  \
 	build/solutions/aoc_day_8.o \
 	build/aoc.o  \
 	bin/lib/librunner.a  \
+	bin/lib/libscreen.a  \
 	bin/lib/libsolutions.a  \
 	bin/aoc
 

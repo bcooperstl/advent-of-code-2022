@@ -173,6 +173,64 @@ static int is_visible(day_8_forest_t * forest, int row, int col)
     return FALSE;
 }
 
+static int calculate_scenic_score(day_8_forest_t * forest, int row, int col)
+{
+#ifdef DEBUG_DAY_8
+        printf("Calculating scenic score for row %d col %d\n", row, col);
+#endif
+    
+    int up=0;
+    int down=0;
+    int left=0;
+    int right=0;
+    
+    // calculate up score
+    for (int above_row=row-1; above_row>=0; above_row--)
+    {
+        up++;
+        if (forest->data[above_row][col] >= forest->data[row][col])
+        {
+            break;
+        }
+    }
+    
+    // calculate down score
+    for (int below_row=row+1; below_row<=(forest->rows-1); below_row++)
+    {
+        down++;
+        if (forest->data[below_row][col] >= forest->data[row][col])
+        {
+            break;
+        }
+    }
+    
+    // calculate left score
+    for (int left_col=col-1; left_col>=0; left_col--)
+    {
+        left++;
+        if (forest->data[row][left_col] >= forest->data[row][col])
+        {
+            break;
+        }
+    }
+
+    // calculate right score
+    for (int right_col=col+1; right_col<=(forest->cols-1); right+col++)
+    {
+        right++;
+        if (forest->data[row][right_col] >= forest->data[row][col])
+        {
+            break;
+        }
+    }
+
+    int score = up * down * left * right;
+#ifdef DEBUG_DAY_8
+    printf("  scenic score is %d from up=%d down=%d left=%d right=%d\n", score, up, down, left, right);
+#endif
+    return score;
+}
+
 void day_8_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     day_8_forest_t forest;
@@ -197,6 +255,38 @@ void day_8_part_1(char * filename, extra_args_t * extra_args, char * result)
     cleanup_forest(&forest);
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", num_visible);
+    
+    return;
+}
+
+void day_8_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_8_forest_t forest;
+    
+    if (parse_input(filename, &forest) != TRUE)
+    {
+        fprintf(stderr, "Error parsing input %s\n", filename);
+    }
+    
+    int best_score = 0;
+    for (int row=0; row<forest.rows; row++)
+    {
+        for (int col=0; col<forest.cols; col++)
+        {
+            int score = calculate_scenic_score(&forest, row, col);
+            if (score > best_score)
+            {
+#ifdef DEBUG_DAY_8
+                printf("New best scenic score of %d\n", score);
+#endif
+                best_score = score;
+            }
+        }
+    }
+    
+    cleanup_forest(&forest);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", best_score);
     
     return;
 }

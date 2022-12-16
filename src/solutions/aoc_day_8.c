@@ -215,7 +215,7 @@ static int calculate_scenic_score(day_8_forest_t * forest, int row, int col)
     }
 
     // calculate right score
-    for (int right_col=col+1; right_col<=(forest->cols-1); right+col++)
+    for (int right_col=col+1; right_col<=(forest->cols-1); right_col++)
     {
         right++;
         if (forest->data[row][right_col] >= forest->data[row][col])

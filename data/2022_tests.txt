@@ -35,3 +35,4 @@
 7,1,day7_input.txt,1243729
 7,2,test_cases/day7_test1.txt,24933642
 7,2,day7_input.txt,4443914
+8,1,test_cases/day8_test1.txt,21

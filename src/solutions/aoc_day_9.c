@@ -8,14 +8,14 @@
 #include "aoc_screen.h"
 
 #define STATE_1 0 // tail is northwest of head
-#define STATE_2 0 // tail is north of head
-#define STATE_3 0 // tail is northeast of head
-#define STATE_4 0 // tail is west of head
-#define STATE_5 0 // tail is same as head
-#define STATE_6 0 // tail is east of head
-#define STATE_7 0 // tail is southwest of head
-#define STATE_8 0 // tail is south of head
-#define STATE_9 0 // tail is southeast of head
+#define STATE_2 1 // tail is north of head
+#define STATE_3 2 // tail is northeast of head
+#define STATE_4 3 // tail is west of head
+#define STATE_5 4 // tail is same as head
+#define STATE_6 5 // tail is east of head
+#define STATE_7 6 // tail is southwest of head
+#define STATE_8 7 // tail is south of head
+#define STATE_9 8 // tail is southeast of head
 
 #define UP 0 // up
 #define DOWN 1 // down
@@ -112,12 +112,64 @@ void day_9_part_1(char * filename, extra_args_t * extra_args, char * result)
     screen_set(&tail_history, tail_x, tail_y, TAIL);
 
 #ifdef DEBUG_DAY_9
+    printf("Head is at (%d,%d). Tail is at (%d,%d). State number is %d\n", head_x, head_y, tail_x, tail_y, state+1);
     printf("Current:\n");
     display_screen(&current);
     printf("Tail history:\n");
     display_screen(&tail_history);
 #endif
     
+    for (int i=0; i<instructions.num_instructions; i++)
+    {
+#ifdef DEBUG_DAY_9
+        printf("Instruction %d is to move %d steps in direction %d\n", i, instructions.instructions[i].num_steps, instructions.instructions[i].direction);
+#endif
+        for (int step=0; step<instructions.instructions[i].num_steps; step++)
+        {
+            day_9_move_t move = mt.moves[state][instructions.instructions[i].direction];
+#ifdef DEBUG_DAY_9
+            printf("Move table results in head changes (%d,%d) tail changes (%d,%d) new state number %d\n", move.head_delta_x, move.head_delta_y, move.tail_delta_x, move.tail_delta_y, move.next_state + 1);
+#endif
+            
+            screen_set(&current, head_x, head_y, EMPTY);
+            screen_set(&current, tail_x, tail_y, EMPTY);
+            head_x += move.head_delta_x;
+            head_y += move.head_delta_y;
+            tail_x += move.tail_delta_x;
+            tail_y += move.tail_delta_y;
+            state = move.next_state;
+            if ((head_x > current.max_x) || 
+                (head_x < current.min_x) ||
+                (head_y > current.max_y) || 
+                (head_y < current.min_y) ||
+                (tail_x > current.max_x) || 
+                (tail_x < current.min_x) ||
+                (tail_y > current.max_y) || 
+                (tail_y < current.min_y))
+            {
+                screen_expand(&current, EMPTY);
+                screen_expand(&tail_history, EMPTY);
+            }
+            if ((head_x == tail_x) && (head_y == tail_y))
+            {
+                screen_set(&current, head_x, head_y, BOTH);
+            }
+            else
+            {
+                screen_set(&current, head_x, head_y, HEAD);
+                screen_set(&current, tail_x, tail_y, TAIL);
+            }
+            screen_set(&tail_history, tail_x, tail_y, TAIL);
+#ifdef DEBUG_DAY_9
+            printf(" Head is at (%d,%d). Tail is at (%d,%d). State number is %d\n", head_x, head_y, tail_x, tail_y, state+1);
+            printf("Current:\n");
+            display_screen(&current);
+            printf("Tail history:\n");
+            display_screen(&tail_history);
+#endif
+        }
+    }
+
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", screen_num_matching(&tail_history, TAIL));
     
     cleanup_screen(&current);
@@ -284,8 +336,8 @@ static int build_move_table(day_9_move_table_t * mt)
     
     mt->moves[STATE_8][UP].head_delta_x = 0;
     mt->moves[STATE_8][UP].head_delta_y = -1; // going up means the row decreases by 1
-    mt->moves[STATE_8][UP].tail_delta_x = -1;
-    mt->moves[STATE_8][UP].tail_delta_y = 0;
+    mt->moves[STATE_8][UP].tail_delta_x = 0;
+    mt->moves[STATE_8][UP].tail_delta_y = -1;
     mt->moves[STATE_8][UP].next_state   = STATE_8;
     mt->moves[STATE_8][DOWN].head_delta_x = 0;
     mt->moves[STATE_8][DOWN].head_delta_y = 1; // going down means the row increases by 1

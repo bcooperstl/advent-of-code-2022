@@ -39,4 +39,5 @@
 8,1,day8_input.txt,1711
 8,2,test_cases/day8_test1.txt,8
 8,2,day8_input.txt,301392
-9.1.test_cases/day9_test1.txt,13
+9,1,test_cases/day9_test1.txt,13
+9,1,day9_input.txt,6037

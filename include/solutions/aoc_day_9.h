@@ -42,7 +42,32 @@ struct day_9_instructions
 
 typedef struct day_9_instructions day_9_instructions_t;
 
+
+struct day_9_move_2
+{
+    int delta_x;
+    int delta_y;
+    int is_noop;
+};
+
+typedef struct day_9_move_2 day_9_move_2_t;
+
+struct day_9_move_table_2
+{
+    day_9_move_2_t moves[5][5];
+};
+
+typedef struct day_9_move_table_2 day_9_move_table_2_t;
+
+struct day_9_position
+{
+    int x;
+    int y;
+};
+
+typedef struct day_9_position day_9_position_t;
+
 void day_9_part_1(char * forestname, extra_args_t * extra_args, char * result);
-//void day_9_part_2(char * forestname, extra_args_t * extra_args, char * result);
+void day_9_part_2(char * forestname, extra_args_t * extra_args, char * result);
 
 #endif

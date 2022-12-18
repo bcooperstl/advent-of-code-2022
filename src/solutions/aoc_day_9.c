@@ -571,4 +571,19 @@ static int build_move_table_2(day_9_move_table_2_t * mt)
     mt->moves[1+MT2_OFFSET][2+MT2_OFFSET].delta_y=-1;
     mt->moves[1+MT2_OFFSET][2+MT2_OFFSET].is_noop = FALSE;
 
+    mt->moves[2+MT2_OFFSET][2+MT2_OFFSET].delta_x=-1;
+    mt->moves[2+MT2_OFFSET][2+MT2_OFFSET].delta_y=-1;
+    mt->moves[2+MT2_OFFSET][2+MT2_OFFSET].is_noop = FALSE;
+
+    mt->moves[2+MT2_OFFSET][-2+MT2_OFFSET].delta_x=-1;
+    mt->moves[2+MT2_OFFSET][-2+MT2_OFFSET].delta_y=1;
+    mt->moves[2+MT2_OFFSET][-2+MT2_OFFSET].is_noop = FALSE;
+
+    mt->moves[-2+MT2_OFFSET][-2+MT2_OFFSET].delta_x=1;
+    mt->moves[-2+MT2_OFFSET][-2+MT2_OFFSET].delta_y=1;
+    mt->moves[-2+MT2_OFFSET][-2+MT2_OFFSET].is_noop = FALSE;
+
+    mt->moves[-2+MT2_OFFSET][2+MT2_OFFSET].delta_x=1;
+    mt->moves[-2+MT2_OFFSET][2+MT2_OFFSET].delta_y=-1;
+    mt->moves[-2+MT2_OFFSET][2+MT2_OFFSET].is_noop = FALSE;
 }

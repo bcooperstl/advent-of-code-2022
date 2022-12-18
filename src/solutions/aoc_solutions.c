@@ -11,6 +11,7 @@
 #include "aoc_day_6.h"
 #include "aoc_day_7.h"
 #include "aoc_day_8.h"
+#include "aoc_day_9.h"
 
 #define DAY_INDEX(day) (day -1)
 #define PART_INDEX(part) (part-1)
@@ -48,6 +49,8 @@ void initialize_solutions(aoc_solutions_t * solutions)
     solutions->solutions[DAY_INDEX(7)][PART_INDEX(2)] = day_7_part_2;
     solutions->solutions[DAY_INDEX(8)][PART_INDEX(1)] = day_8_part_1;
     solutions->solutions[DAY_INDEX(8)][PART_INDEX(2)] = day_8_part_2;
+    solutions->solutions[DAY_INDEX(9)][PART_INDEX(1)] = day_9_part_1;
+    solutions->solutions[DAY_INDEX(9)][PART_INDEX(2)] = day_9_part_2;
 }
 
 int run_solution(aoc_solutions_t * solutions, int day, int part, char * filename, extra_args_t * extra_args, char * result)

@@ -117,8 +117,8 @@ void display_screen(aoc_screen_t * screen)
     
     for (int y=0; y<screen->height; y++)
     {
-        memcpy(line, screen->textmap[y], screen->height);
-        line[screen->height]='\0';
+        memcpy(line, screen->textmap[y], screen->width);
+        line[screen->width]='\0';
         printf("%s\n", line);
     }
     free(line);

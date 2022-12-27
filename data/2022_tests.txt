@@ -46,3 +46,4 @@
 9,2,day9_input.txt,2485
 #10,1,test_cases/day10_test1.txt,-720
 10,1,test_cases/day10_test2.txt,13140
+10,1,day10_input.txt,14780

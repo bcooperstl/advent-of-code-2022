@@ -34,6 +34,6 @@ typedef struct day_10_key_cycle day_10_key_cycle_t;
 
 
 void day_10_part_1(char * forestname, extra_args_t * extra_args, char * result);
-//void day_10_part_2(char * forestname, extra_args_t * extra_args, char * result);
+void day_10_part_2(char * forestname, extra_args_t * extra_args, char * result);
 
 #endif

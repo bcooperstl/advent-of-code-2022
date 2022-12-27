@@ -5,9 +5,13 @@
 #include "aoc_solutions.h"
 #include "aoc_day_10.h"
 #include "file_utils.h"
+#include "aoc_screen.h"
 
 #define INPUT_NOOP "noop"
 #define INPUT_ADDX "addx"
+
+#define SCREEN_LIGHT '#'
+#define SCREEN_DARK  '.'
 
 #define NUM_KEY_CYCLES 6
 
@@ -133,6 +137,86 @@ void day_10_part_1(char * filename, extra_args_t * extra_args, char * result)
     }
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", sum);
+    
+    return;
+}
+
+void day_10_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_10_instructions_t instructions;
+    
+    int x = 1;
+    int cycle = 0;
+    int pixel_x, pixel_y;
+    
+    aoc_screen_t display;
+    init_screen(&display, SCREEN_DARK, 0, 39, 0, 5);
+    
+#ifdef DEBUG_DAY_10            
+    printf("Initial screen:\n");
+    display_screen(&display);
+#endif
+    
+    
+    if (parse_input(filename, &instructions) != TRUE)
+    {
+        fprintf(stderr, "Error parsing input %s\n", filename);
+    }
+    
+    for (int i=0; i<instructions.num_instructions; i++)
+    {
+        if (instructions.instructions[i].type == DAY_10_TYPE_NOOP)
+        {
+            cycle++;
+            pixel_x = (cycle - 1) % 40;
+            pixel_y = (cycle - 1) / 40;
+            
+#ifdef DEBUG_DAY_10            
+            printf("Instruction %d is NOOP, cycle %d has center pixel at (%d, %d)\n and x = ", i, cycle, pixel_x, pixel_y, x);
+#endif
+            
+            if ((x == (pixel_x-1)) || (x == pixel_x) || (x == (pixel_x + 1)))
+            {
+                screen_set(&display, pixel_x, pixel_y, SCREEN_LIGHT);
+#ifdef DEBUG_DAY_10            
+                printf("Pixel (%d,%d) is now lit. Updated display:\n", pixel_x, pixel_y);
+                display_screen(&display);
+#endif
+            }
+        }
+        else if (instructions.instructions[i].type == DAY_10_TYPE_ADDX)
+        {
+            for (int j=0; j<2; j++)
+            {
+                cycle++;
+                pixel_x = (cycle - 1) % 40;
+                pixel_y = (cycle - 1) / 40;
+            
+#ifdef DEBUG_DAY_10            
+                printf("Instruction %d is ADDX, cycle %d has center pixel at (%d, %d)\n and x = ", i, cycle, pixel_x, pixel_y, x);
+#endif
+            
+                if ((x == (pixel_x-1)) || (x == pixel_x) || (x == (pixel_x + 1)))
+                {
+                    screen_set(&display, pixel_x, pixel_y, SCREEN_LIGHT);
+#ifdef DEBUG_DAY_10            
+                    printf("Pixel (%d,%d) is now lit. Updated display:\n", pixel_x, pixel_y);
+                    display_screen(&display);
+#endif
+                }
+            }
+            x+=instructions.instructions[i].value;
+#ifdef DEBUG_DAY_10            
+            printf("Instruction %d is ADDX, incrementing x by %d to %d after cycles were completed\n", i, instructions.instructions[i].value, x);
+#endif
+        }
+    }
+    
+    printf("Final Screen:\n");
+    display_screen(&display);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "");
+    cleanup_screen(&display);
     
     return;
 }

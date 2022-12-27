@@ -101,6 +101,7 @@ build/solutions/aoc_day_9.o: src/solutions/aoc_day_9.c  \
 
 build/solutions/aoc_day_10.o: src/solutions/aoc_day_10.c  \
 	include/solutions/aoc_day_10.h \
+	include/screen/aoc_screen.h \
 	include/common/constants.h
 	gcc ${CFLAGS} -o build/solutions/aoc_day_10.o -c src/solutions/aoc_day_10.c
 

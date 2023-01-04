@@ -48,3 +48,4 @@
 10,1,test_cases/day10_test2.txt,13140
 10,1,day10_input.txt,14780
 11,1,test_cases/day11_test1.txt,10605
+11,1,day11_input.txt,110264

@@ -22,21 +22,22 @@ static int parse_input(char * filename, day_11_monkeys_t * monkeys)
         return FALSE;
     }
     
-    int num_monkeys = (fd.num_lines + 1) / 7;
+    monkeys->num_monkeys = (fd.num_lines + 1) / 7;
 
 #ifdef DEBUG_DAY_11_PARSE
-    printf("The input file has %d lines, which means there are %d monkeys\n", fd.num_lines, num_monkeys);
+    printf("The input file has %d lines, which means there are %d monkeys\n", fd.num_lines, monkeys->num_monkeys);
 #endif
 
     ld = fd.head_line;
     td = ld->head_token;
     
-    for (int monkey_idx=0; monkey_idx < num_monkeys; monkey_idx++)
+    for (int monkey_idx=0; monkey_idx < monkeys->num_monkeys; monkey_idx++)
     {   
 #ifdef DEBUG_DAY_11_PARSE
         printf("Parsing Monkey %d\n", monkey_idx);
 #endif
         // skip the Monkey line; corresponds to index
+        monkeys->monkeys[monkey_idx].index_number = monkey_idx;
         ld = ld->next;
         
         // items start at position 18 and are all 2-digit numbers
@@ -127,6 +128,99 @@ static int parse_input(char * filename, day_11_monkeys_t * monkeys)
     return TRUE;
 }
 
+static void add_item(day_11_monkey_t * monkey, int item)
+{
+#ifdef DEBUG_DAY_11_ITEM
+    printf("     Added monkey %d item position %d with value %d\n", monkey->index_number, monkey->num_items, item);
+#endif
+    monkey->items[monkey->num_items] = item;
+    monkey->num_items++;
+}
+
+static void inspect_item(day_11_monkeys_t * monkeys, day_11_monkey_t * monkey, int item_idx)
+{
+    int item = monkey->items[item_idx];
+#ifdef DEBUG_DAY_11_ITEM
+    printf("  Monkey inspected an item with a worry level of %d.\n", item);
+#endif
+    switch (monkey->operation_type)
+    {
+        case DAY11_OP_OLD_SQUARED:
+            item = item * item;
+#ifdef DEBUG_DAY_11_ITEM
+            printf("    Worry level is multiplied by itself to %d.\n", item);
+#endif
+            break;
+        case DAY11_OP_OLD_MULTIPLY:
+            item = item * monkey->operation_constant;
+#ifdef DEBUG_DAY_11_ITEM
+            printf("    Worry level is multiplied by %d to %d.\n", monkey->operation_constant, item);
+#endif
+            break;
+        case DAY11_OP_OLD_ADD:
+            item = item + monkey->operation_constant;
+#ifdef DEBUG_DAY_11_ITEM
+            printf("    Worry level increases by %d to %d.\n", monkey->operation_constant, item);
+#endif
+            break;
+    }
+    item = item / 3;
+#ifdef DEBUG_DAY_11_ITEM
+    printf("    Monkey gets bored with item. Worry level is divided by 3 to %d\n", item);
+#endif
+    if ((item % monkey->test_modulus) == 0)
+    {
+#ifdef DEBUG_DAY_11_ITEM
+        printf("    Current worry level is divisible by %d.\n", monkey->test_modulus);
+        printf("    Item with worry level %d is thrown to monkey %d\n", item, monkey->true_destination);
+#endif
+        add_item(&monkeys->monkeys[monkey->true_destination], item);
+    }
+    else
+    {
+#ifdef DEBUG_DAY_11_ITEM
+        printf("    Current worry level is not divisible by %d.\n", monkey->test_modulus);
+        printf("    Item with worry level %d is thrown to monkey %d\n", item, monkey->false_destination);
+#endif
+        add_item(&monkeys->monkeys[monkey->false_destination], item);
+    }
+    monkey->inspection_count++;
+}
+
+static void monkey_inspect_item_list(day_11_monkeys_t * monkeys, day_11_monkey_t * monkey)
+{
+    for (int item_idx=0; item_idx<monkey->num_items; item_idx++)
+    {
+        inspect_item(monkeys, monkey, item_idx);
+    }
+    monkey->num_items = 0;
+}
+
+
+static void do_round(day_11_monkeys_t * monkeys)
+{
+    for (int monkey_idx=0; monkey_idx < monkeys->num_monkeys; monkey_idx++)
+    {
+#ifdef DEBUG_DAY_11_ITEM
+        printf("Monkey %d:\n", monkey_idx);
+#endif
+        monkey_inspect_item_list(monkeys, &monkeys->monkeys[monkey_idx]);
+    }
+    
+#ifdef DEBUG_DAY_11
+    printf("After round completion, the monkeys are holding items with the following worry levels:\n");
+    for (int m=0; m<monkeys->num_monkeys; m++)
+    {
+        printf("Monkey %d: ", m);
+        for (int i=0; i<monkeys->monkeys[m].num_items; i++)
+        {
+            printf("%d ", monkeys->monkeys[m].items[i]);
+        }
+        printf("\n");
+    }
+#endif
+}
+
 void day_11_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     day_11_monkeys_t monkeys;
@@ -136,10 +230,25 @@ void day_11_part_1(char * filename, extra_args_t * extra_args, char * result)
         fprintf(stderr, "Error parsing input %s\n", filename);
     }
     
-    int num_visible = 0;
+    for (int i=0; i<20; i++)
+    {
+        do_round(&monkeys);
+    }
     
-    snprintf(result, MAX_RESULT_LENGTH+1, "%d", num_visible);
+    int best_two[2] = {0,0};
+    for (int i=0; i<monkeys.num_monkeys; i++)
+    {
+        if (monkeys.monkeys[i].inspection_count > best_two[0])
+        {
+            best_two[1] = best_two[0];
+            best_two[0] = monkeys.monkeys[i].inspection_count;
+        }
+        else if (monkeys.monkeys[i].inspection_count > best_two[1])
+        {
+            best_two[1] = monkeys.monkeys[i].inspection_count;
+        }
+    }    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", best_two[0] * best_two[1]);
     
     return;
 }
-

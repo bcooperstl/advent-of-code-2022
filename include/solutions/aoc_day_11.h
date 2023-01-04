@@ -21,6 +21,7 @@ struct day_11_monkey
     int true_destination;
     int false_destination;
     int inspection_count;
+    int index_number;
 };
 
 typedef struct day_11_monkey day_11_monkey_t;

@@ -84,7 +84,23 @@ static void find_start_and_end (day_12_map_t * map, int * start_row, int * start
             }
         }
     }
+    return;
 }   
+
+static void reset_map (day_12_map_t * map)
+{
+    for (int row=0; row<map->num_rows; row++)
+    {
+        for (int col=0; col<map->num_cols; col++)
+        {
+            map->nodes[row][col].steps_to_here = INT_MAX;
+            map->nodes[row][col].evaluated = FALSE;
+        }
+    }
+    return;
+}
+
+            
 
 static int find_next_node_to_evaluate(day_12_map_t * map, int * next_row, int * next_col)
 {
@@ -112,7 +128,7 @@ static int find_next_node_to_evaluate(day_12_map_t * map, int * next_row, int * 
     }
     return found_any;
 }
-                
+
 static void evaluate_node(day_12_map_t * map, int node_row, int node_col)
 {
     char node_elevation = map->nodes[node_row][node_col].elevation;
@@ -201,6 +217,55 @@ void day_12_part_1(char * filename, extra_args_t * extra_args, char * result)
     }
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", map.nodes[end_row][end_col].steps_to_here);
+    
+    return;
+}
+
+void day_12_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_12_map_t map;
+    int start_row, start_col, end_row, end_col, node_row, node_col;
+    
+    int best_steps = INT_MAX;
+    
+    if (parse_input(filename, &map) != TRUE)
+    {
+        fprintf(stderr, "Error parsing input %s\n", filename);
+    }
+    
+    find_start_and_end(&map, &start_row, &start_col, &end_row, &end_col);
+    
+    for (start_row=0; start_row<map.num_rows; start_row++)
+    {
+        for (start_col=0; start_col<map.num_cols; start_col++)
+        {
+            if (map.nodes[start_row][start_col].elevation == 'a')
+            {
+#ifdef DEBUG_DAY_12_2
+                printf("Running with start at row=%d col=%d\n", start_row, end_row);
+#endif
+                reset_map(&map);
+                map.nodes[start_row][start_col].steps_to_here = 0;
+                
+                while (find_next_node_to_evaluate(&map, &node_row, &node_col) == TRUE)
+                {
+                    evaluate_node(&map, node_row, node_col);
+                }
+                
+#ifdef DEBUG_DAY_12_2
+                printf(" End node can be reached in %d steps\n", map.nodes[end_row][end_col].steps_to_here);
+#endif
+                if (map.nodes[end_row][end_col].steps_to_here < best_steps)
+                {
+                    best_steps = map.nodes[end_row][end_col].steps_to_here;
+#ifdef DEBUG_DAY_12_2
+                    printf(" NEW BEST STEPS\n");
+#endif
+                }
+            }
+        }
+    }
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", best_steps);
     
     return;
 }

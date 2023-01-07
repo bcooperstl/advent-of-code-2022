@@ -241,25 +241,37 @@ void day_12_part_2(char * filename, extra_args_t * extra_args, char * result)
         {
             if (map.nodes[start_row][start_col].elevation == 'a')
             {
-#ifdef DEBUG_DAY_12_2
-                printf("Running with start at row=%d col=%d\n", start_row, end_row);
-#endif
-                reset_map(&map);
-                map.nodes[start_row][start_col].steps_to_here = 0;
-                
-                while (find_next_node_to_evaluate(&map, &node_row, &node_col) == TRUE)
+                if ((start_row != 0 && map.nodes[start_row-1][start_col].elevation != 'a') ||
+                    (start_row != map.num_rows-1 && map.nodes[start_row+1][start_col].elevation != 'a') ||
+                    (start_col != 0 && map.nodes[start_row][start_col-1].elevation != 'a') ||
+                    (start_col != map.num_cols-1 && map.nodes[start_row][start_col+1].elevation != 'a'))
                 {
-                    evaluate_node(&map, node_row, node_col);
+#ifdef DEBUG_DAY_12_2
+                    printf("Running with start at row=%d col=%d\n", start_row, end_row);
+#endif
+                    reset_map(&map);
+                    map.nodes[start_row][start_col].steps_to_here = 0;
+                
+                    while (find_next_node_to_evaluate(&map, &node_row, &node_col) == TRUE)
+                    {
+                        evaluate_node(&map, node_row, node_col);
+                    }
+                
+#ifdef DEBUG_DAY_12_2
+                    printf(" End node can be reached in %d steps\n", map.nodes[end_row][end_col].steps_to_here);
+#endif
+                    if (map.nodes[end_row][end_col].steps_to_here < best_steps)
+                    {
+                        best_steps = map.nodes[end_row][end_col].steps_to_here;
+#ifdef DEBUG_DAY_12_2
+                        printf(" NEW BEST STEPS\n");
+#endif
+                    }
                 }
-                
-#ifdef DEBUG_DAY_12_2
-                printf(" End node can be reached in %d steps\n", map.nodes[end_row][end_col].steps_to_here);
-#endif
-                if (map.nodes[end_row][end_col].steps_to_here < best_steps)
+                else
                 {
-                    best_steps = map.nodes[end_row][end_col].steps_to_here;
 #ifdef DEBUG_DAY_12_2
-                    printf(" NEW BEST STEPS\n");
+                    printf("Short circuiting to skip start at row=%d col=%d\n", start_row, end_row);
 #endif
                 }
             }

@@ -53,3 +53,4 @@
 11,2,day11_input.txt,23612457316
 12,1,test_cases/day12_test1.txt,31
 12,2,day12_input.txt,391
+12,2,test_cases/day12_test1.txt,29

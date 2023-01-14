@@ -80,7 +80,7 @@ static int parse_list(char * list, int pos, day_13_element_t * element, int dept
         }
     }
 #ifdef DEBUG_DAY_13_PARSE
-    printf("%*s Done arsing list; had %d elements; next position to parse is %d\n", element->num_list_elements, pos+1);
+    printf("%*s Done arsing list; had %d elements; next position to parse is %d\n", depth, "", element->num_list_elements, pos+1);
 #endif
     return pos+1;
 }

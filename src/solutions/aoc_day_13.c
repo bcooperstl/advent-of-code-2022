@@ -268,6 +268,9 @@ void day_13_part_1(char * filename, extra_args_t * extra_args, char * result)
     
     for (int index=1; index<=num_pairs; index++)
     {
+#ifdef DEBUG_DAY_13            
+        printf("== Pair %d ==\n", index);
+#endif
         day_13_element_t left, right;
         parse_list(ld->head_token->token, 0, &left, 0);
         ld = ld->next;

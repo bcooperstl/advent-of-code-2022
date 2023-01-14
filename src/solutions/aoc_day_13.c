@@ -265,14 +265,13 @@ void day_13_part_1(char * filename, extra_args_t * extra_args, char * result)
 #endif
 
     ld = fd.head_line;
-    td = ld->head_token;
     
     for (int index=1; index<=num_pairs; index++)
     {
         day_13_element_t left, right;
-        parse_list(td->token, 0, &left, 0);
+        parse_list(ld->head_token->token, 0, &left, 0);
         ld = ld->next;
-        parse_list(td->token, 0, &right, 0);
+        parse_list(ld->head_token->token, 0, &right, 0);
         if (index != num_pairs)
         {
             ld = ld->next->next; // advance 2 lines to the start of the next pair; don't do this on last pair - will seg fault

@@ -16,6 +16,6 @@ struct day_13_element
 typedef struct day_13_element day_13_element_t;
 
 void day_13_part_1(char * forestname, extra_args_t * extra_args, char * result);
-//void day_13_part_2(char * forestname, extra_args_t * extra_args, char * result);
+void day_13_part_2(char * forestname, extra_args_t * extra_args, char * result);
 
 #endif

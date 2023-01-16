@@ -62,6 +62,7 @@ void initialize_solutions(aoc_solutions_t * solutions)
     solutions->solutions[DAY_INDEX(12)][PART_INDEX(1)] = day_12_part_1;
     solutions->solutions[DAY_INDEX(12)][PART_INDEX(2)] = day_12_part_2;
     solutions->solutions[DAY_INDEX(13)][PART_INDEX(1)] = day_13_part_1;
+    solutions->solutions[DAY_INDEX(13)][PART_INDEX(2)] = day_13_part_2;
 }
 
 int run_solution(aoc_solutions_t * solutions, int day, int part, char * filename, extra_args_t * extra_args, char * result)

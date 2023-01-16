@@ -10,6 +10,9 @@
 #define WRONG_ORDER 2
 #define CONTINUE 3
 
+#define TWO_PACKET "[[2]]"
+#define SIX_PACKET "[[6]]"
+
 // pos is index for the starting [ of the list
 // return value is the pos after the ending ] of the list; i.e. the next char to parse
 static int parse_list(char * list, int pos, day_13_element_t * element, int depth)
@@ -304,8 +307,86 @@ void day_13_part_1(char * filename, extra_args_t * extra_args, char * result)
             printf("\n");
 #endif
         }
+        cleanup_list(&left);
+        cleanup_list(&right);
     }
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", sum_indices);
+    
+    return;
+}
+
+void day_13_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    int index2=1;
+    int index6=2;
+    
+    file_data_t fd;
+    line_data_t * ld;
+    token_data_t * td;
+    
+    // read in the input file with no delimiteres
+    file_data_init(&fd);
+    file_data_read_file(&fd, filename, "", 0, '\0', '\0');
+    if (fd.num_lines == 0)
+    {
+        fprintf(stderr, "Error reading in data from %s\n", filename);
+        file_data_cleanup(&fd);
+        return;
+    }
+    
+    ld = fd.head_line;
+    
+    while (ld != NULL)
+    {
+        if (strlen(ld->head_token->token) == 0)
+        {
+            ld = ld->next;
+            continue;
+        }
+        
+        day_13_element_t two, six, element;
+        parse_list(TWO_PACKET, 0, &two, 0);
+        parse_list(ld->head_token->token, 0, &element, 0);
+        
+        int comp = compare(&element, &two, 0);
+        cleanup_list(&two);
+        cleanup_list(&element);
+        
+        if (comp == RIGHT_ORDER)
+        {
+            index2++;
+            index6++;
+#ifdef DEBUG_DAY_13            
+            printf("Element %s comes before element [[2]]. Incrementing both indices to %d and %d\n", ld->head_token->token, index2, index6);
+#endif
+        }
+        else
+        {
+            parse_list(SIX_PACKET, 0, &six, 0);
+            parse_list(ld->head_token->token, 0, &element, 0);
+            
+            comp = compare(&element, &six, 0);
+            cleanup_list(&six);
+            cleanup_list(&element);
+            
+            if (comp == RIGHT_ORDER)
+            {
+                index6++;
+#ifdef DEBUG_DAY_13            
+                printf("Element %s comes after element [[2]] but before element [[6]]. Incrementing only index 6, resulting in indices %d and %d\n", ld->head_token->token, index2, index6);
+#endif
+            }
+            else
+            {
+#ifdef DEBUG_DAY_13            
+                printf("Element %s comes after element [[6]]. Leaving indices alone at %d and %d\n", ld->head_token->token, index2, index6);
+#endif
+            }                
+        }
+        ld = ld->next;
+    }
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", index2*index6);
     
     return;
 }

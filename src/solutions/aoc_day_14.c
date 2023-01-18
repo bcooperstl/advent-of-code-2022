@@ -195,7 +195,7 @@ void day_14_part_1(char * filename, extra_args_t * extra_args, char * result)
     determine_min_max_area(ld, &min_x, &max_x, &min_y, &max_y);
     
     aoc_screen_t screen;
-    init_screen(&screen, PIXEL_AIR, min_x, max_x, min_y, max_y);
+    init_screen(&screen, PIXEL_AIR, min_x-1, max_x+1, min_y, max_y);
     
     while (ld != NULL)
     {

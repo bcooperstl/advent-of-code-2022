@@ -136,6 +136,7 @@ static void map_line(aoc_screen_t * screen, line_data_t * ld)
 
 #define DROP_PLACED 1
 #define DROP_OVERFLOW 2
+#define DROP_ORIGIN 3
 
 static int drop_one_sand(aoc_screen_t * screen, int max_y)
 {
@@ -164,7 +165,14 @@ static int drop_one_sand(aoc_screen_t * screen, int max_y)
             printf("Placing grain of sand at (%d,%d)\n", x, y);
             display_screen(screen);
 #endif
-            return DROP_PLACED;
+            if (x == 500 && y == 0)
+            {
+                return DROP_ORIGIN;
+            }
+            else
+            {
+                return DROP_PLACED;
+            }
         }
     }
     
@@ -208,6 +216,55 @@ void day_14_part_1(char * filename, extra_args_t * extra_args, char * result)
     {
         count++;
     }
+    
+    display_screen(&screen);
+    file_data_cleanup(&fd);
+        
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", count);
+    
+    return;
+}
+
+void day_14_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    file_data_t fd;
+    line_data_t * ld;
+    
+    // read in the input file with space and comma delimiteres
+    file_data_init(&fd);
+    file_data_read_file(&fd, filename, " ,", 2, '\0', '\0');
+    if (fd.num_lines == 0)
+    {
+        fprintf(stderr, "Error reading in data from %s\n", filename);
+        file_data_cleanup(&fd);
+        return;
+    }
+
+    ld = fd.head_line;
+    
+    int min_x, max_x, min_y, max_y;
+    determine_min_max_area(ld, &min_x, &max_x, &min_y, &max_y);
+    
+    aoc_screen_t screen;
+    init_screen(&screen, PIXEL_AIR, min_x-1-max_y, max_x+1+max_y, min_y, max_y+2);
+    
+    while (ld != NULL)
+    {
+        map_line(&screen, ld);
+        ld = ld->next;
+    }
+    
+    for (int x=min_x-1-max_y; x<= max_x+1+max_y; x++)
+    {
+        screen_set(&screen, x, max_y+2, PIXEL_WALL);
+    }
+    
+    int count = 0;
+    while (drop_one_sand(&screen, max_y+2) == DROP_PLACED)
+    {
+        count++;
+    }
+    count++; // need to add one for the DROP_ORIGIN
     
     display_screen(&screen);
     file_data_cleanup(&fd);

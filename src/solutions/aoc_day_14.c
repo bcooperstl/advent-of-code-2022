@@ -197,7 +197,7 @@ void day_14_part_1(char * filename, extra_args_t * extra_args, char * result)
     aoc_screen_t screen;
     init_screen(&screen, PIXEL_AIR, min_x, max_x, min_y, max_y);
     
-    while (ld = NULL)
+    while (ld != NULL)
     {
         map_line(&screen, ld);
         ld = ld->next;

@@ -38,54 +38,6 @@ static void calculate_target_row_exclude(day_15_sensor_t * sensor, long target_r
     return;
 }
 
-long calculate_overlap(day_15_sensor_t * first, day_15_sensor_t * second)
-{
-#ifdef DEBUG_DAY_15
-    printf("Calculating overlap for sensors at (%ld,%ld) with range %ld thru %ld and (%ld,%ld) with range %ld thru %ld\n", 
-            first->sensor_x, first->sensor_y, first->min_target_row_covered, first->max_target_row_covered,
-            second->sensor_x, second->sensor_y, second->min_target_row_covered, second->max_target_row_covered);
-#endif
-
-    day_15_sensor_t * low;
-    day_15_sensor_t * high;
-
-    if (first->min_target_row_covered <= second->min_target_row_covered)
-    {
-        low = first;
-        high = second;
-    }
-    else
-    {
-        low = second;
-        high = first;
-    }
-#ifdef DEBUG_DAY_15
-    printf(" Using low sensor range %ld thru %ld and high sensor range %ld thru %ld\n", 
-            low->min_target_row_covered, low->max_target_row_covered,
-            high->min_target_row_covered, high->max_target_row_covered);
-#endif
-    
-    if (high->min_target_row_covered > low->max_target_row_covered) // no overlap
-    {
-#ifdef DEBUG_DAY_15
-        printf(" High range starts after the low range ends. No overlap\n");
-#endif
-        return 0;
-    }
-    if (high->max_target_row_covered < low->max_target_row_covered) // high fully inside low
-    {
-#ifdef DEBUG_DAY_15
-        printf(" High range fully inside low range. Overlap is size of high range %ld\n", high->max_target_row_covered - high->min_target_row_covered + 1);
-#endif
-        return high->max_target_row_covered - high->min_target_row_covered + 1;
-    }
-    // high goes past low
-#ifdef DEBUG_DAY_15
-    printf(" High range goes past end of low range. Calculated size of overlap at %ld\n", low->max_target_row_covered - high->min_target_row_covered + 1);
-#endif
-    return low->max_target_row_covered - high->min_target_row_covered + 1;
-}
-
 static long calculate_number_excluded(day_15_sensors_t * sensors, long target_row)
 {
     long sum = 0;
@@ -99,12 +51,6 @@ static long calculate_number_excluded(day_15_sensors_t * sensors, long target_ro
     {
         if (sensors->sensors[i].covers_target_row == TRUE)
         {
-            sum += (sensors->sensors[i].max_target_row_covered - sensors->sensors[i].min_target_row_covered + 1);
-#ifdef DEBUG_DAY_15
-            printf(" Sensor (%ld,%ld) added %ld units, bringing sum to %ld\n", 
-                   sensors->sensors[i].sensor_x, sensors->sensors[i].sensor_y, 
-                   (sensors->sensors[i].max_target_row_covered - sensors->sensors[i].min_target_row_covered + 1), sum);
-#endif        
             if (sensors->sensors[i].beacon_y == target_row)
             {
 #ifdef DEBUG_DAY_15
@@ -116,26 +62,74 @@ static long calculate_number_excluded(day_15_sensors_t * sensors, long target_ro
         }
     }
     
-    for (int first=0; first<sensors->num_sensors - 1; first++)
+    long last_max = LONG_MIN;
+    while (1)
     {
-        for (int second=first+1; second<sensors->num_sensors; second++)
-        {
-            if ((sensors->sensors[first].covers_target_row == TRUE) &&
-                (sensors->sensors[second].covers_target_row == TRUE))
-            {
-                long overlap = calculate_overlap(&sensors->sensors[first], &sensors->sensors[second]);
-                sum -= overlap;
+        int found_range = FALSE;
+        long current_min = LONG_MAX;
+        long current_max;
 #ifdef DEBUG_DAY_15
-                printf(" Decreasing by overlap of %ld results in sum value of %ld\n", overlap, sum);
-#endif        
+        printf("Checking for a range where last_max is %ld\n", last_max);
+#endif
+        // find the lowest min greater than last_max
+        for (int i=0; i<sensors->num_sensors; i++)
+        {
+            if (sensors->sensors[i].covers_target_row == TRUE && 
+                sensors->sensors[i].min_target_row_covered > last_max &&
+                sensors->sensors[i].min_target_row_covered < current_min)
+            {
+#ifdef DEBUG_DAY_15
+                printf(" Found range from %ld-%ld that has new lowest min value greater than last_max\n", sensors->sensors[i].min_target_row_covered, sensors->sensors[i].max_target_row_covered);
+#endif
+                current_min = sensors->sensors[i].min_target_row_covered;
+                current_max = sensors->sensors[i].max_target_row_covered;
+                found_range = TRUE;
             }
         }
+
+        if (found_range == FALSE)
+        {
+#ifdef DEBUG_DAY_15
+            printf(" No range found. Done adding to sum\n");
+#endif
+            break;
+        }
+        
+        int expanded_range;
+        do
+        {
+            expanded_range = FALSE;
+            for (int i=0; i<sensors->num_sensors; i++)
+            {
+                if (sensors->sensors[i].covers_target_row == TRUE && 
+                    sensors->sensors[i].min_target_row_covered >= current_min && 
+                    sensors->sensors[i].min_target_row_covered <= current_max)
+                {
+                    if (sensors->sensors[i].max_target_row_covered > current_max)
+                    {
+                        current_max = sensors->sensors[i].max_target_row_covered;
+#ifdef DEBUG_DAY_15
+                        printf(" Range from %ld-%ld expands max; new current range is %ld-%ld\n", sensors->sensors[i].min_target_row_covered, sensors->sensors[i].max_target_row_covered, current_min, current_max);
+#endif
+                        expanded_range = TRUE;
+                    }
+                }
+            }
+        } while (expanded_range == TRUE);
+        
+        sum += (current_max - current_min + 1);
+        
+#ifdef DEBUG_DAY_15
+        printf("Added %ld to sum, increasing its value to %ld\n", current_max - current_min + 1, sum);
+#endif
+        last_max = current_max;
     }
+    
     if (beacon_on_row == TRUE)
     {
         sum -=1;
 #ifdef DEBUG_DAY_15
-        printf(" Decreasing sum by 1 due to beacon on row results in sum of %ld\n", sum);
+        printf("Decreasing sum by 1 due to beacon on row results in sum of %ld\n", sum);
 #endif        
     }
     return sum;

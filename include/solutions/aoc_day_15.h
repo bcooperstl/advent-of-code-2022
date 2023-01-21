@@ -3,7 +3,7 @@
 
 #include "constants.h"
 
-#define DAY_15_MAX_SENSORS 20
+#define DAY_15_MAX_SENSORS 32
 
 struct day_15_sensor
 {

@@ -68,4 +68,4 @@
 15,1,day15_input.txt,5335787,2000000
 #extra parm is for high limit of x and y coordinates to examine
 15,2,test_cases/day15_test1.txt,56000011,20
-15,2,day15_input.txt,13673971349056
+15,2,day15_input.txt,13673971349056,4000000

@@ -30,10 +30,20 @@ static void calculate_target_row_exclude(day_15_sensor_t * sensor, long target_r
         return;
     }
     sensor->covers_target_row = TRUE;
-    sensor->min_target_row_covered = sensor->sensor_x - (sensor->distance_apart - sensor_to_target_rows);
-    sensor->max_target_row_covered = sensor->sensor_x + (sensor->distance_apart - sensor_to_target_rows);
+    sensor->min_col_in_taget_row_covered = sensor->sensor_x - (sensor->distance_apart - sensor_to_target_rows);
+    sensor->max_col_in_taget_row_covered = sensor->sensor_x + (sensor->distance_apart - sensor_to_target_rows);
 #ifdef DEBUG_DAY_15
-    printf(" This can cover positions %ld thru %ld in the target row\n", sensor->min_target_row_covered, sensor->max_target_row_covered);
+    printf(" This can cover positions %ld thru %ld in the target row\n", sensor->min_col_in_taget_row_covered, sensor->max_col_in_taget_row_covered);
+#endif
+    return;
+}
+
+static void calculate_min_max_rows_covered(day_15_sensor_t * sensor)
+{
+    sensor->min_row_covered = sensor->sensor_y - sensor->distance_apart;
+    sensor->max_row_covered = sensor->sensor_y + sensor->distance_apart;
+#ifdef DEBUG_DAY_15
+    printf(" Sensor will cover rows from %ld to %ld\n", sensor->min_row_covered, sensor->max_row_covered);
 #endif
     return;
 }
@@ -75,14 +85,14 @@ static long calculate_number_excluded(day_15_sensors_t * sensors, long target_ro
         for (int i=0; i<sensors->num_sensors; i++)
         {
             if (sensors->sensors[i].covers_target_row == TRUE && 
-                sensors->sensors[i].min_target_row_covered > last_max &&
-                sensors->sensors[i].min_target_row_covered < current_min)
+                sensors->sensors[i].min_col_in_taget_row_covered > last_max &&
+                sensors->sensors[i].min_col_in_taget_row_covered < current_min)
             {
 #ifdef DEBUG_DAY_15
-                printf(" Found range from %ld-%ld that has new lowest min value greater than last_max\n", sensors->sensors[i].min_target_row_covered, sensors->sensors[i].max_target_row_covered);
+                printf(" Found range from %ld-%ld that has new lowest min value greater than last_max\n", sensors->sensors[i].min_col_in_taget_row_covered, sensors->sensors[i].max_col_in_taget_row_covered);
 #endif
-                current_min = sensors->sensors[i].min_target_row_covered;
-                current_max = sensors->sensors[i].max_target_row_covered;
+                current_min = sensors->sensors[i].min_col_in_taget_row_covered;
+                current_max = sensors->sensors[i].max_col_in_taget_row_covered;
                 found_range = TRUE;
             }
         }
@@ -102,14 +112,14 @@ static long calculate_number_excluded(day_15_sensors_t * sensors, long target_ro
             for (int i=0; i<sensors->num_sensors; i++)
             {
                 if (sensors->sensors[i].covers_target_row == TRUE && 
-                    sensors->sensors[i].min_target_row_covered >= current_min && 
-                    sensors->sensors[i].min_target_row_covered <= current_max)
+                    sensors->sensors[i].min_col_in_taget_row_covered >= current_min && 
+                    sensors->sensors[i].min_col_in_taget_row_covered <= current_max)
                 {
-                    if (sensors->sensors[i].max_target_row_covered > current_max)
+                    if (sensors->sensors[i].max_col_in_taget_row_covered > current_max)
                     {
-                        current_max = sensors->sensors[i].max_target_row_covered;
+                        current_max = sensors->sensors[i].max_col_in_taget_row_covered;
 #ifdef DEBUG_DAY_15
-                        printf(" Range from %ld-%ld expands max; new current range is %ld-%ld\n", sensors->sensors[i].min_target_row_covered, sensors->sensors[i].max_target_row_covered, current_min, current_max);
+                        printf(" Range from %ld-%ld expands max; new current range is %ld-%ld\n", sensors->sensors[i].min_col_in_taget_row_covered, sensors->sensors[i].max_col_in_taget_row_covered, current_min, current_max);
 #endif
                         expanded_range = TRUE;
                     }
@@ -202,6 +212,108 @@ static int parse_input(char * filename, day_15_sensors_t * sensors)
     return TRUE;
 }
 
+static void create_sensor_groups(day_15_sensor_groups_t * sensor_groups, day_15_sensors_t * sensors, long max_row_col)
+{
+    long group_start_values[DAY_15_MAX_SENSORS*2];
+    long temp_values[DAY_15_MAX_SENSORS*2+2];
+    int num_temp_values = sensors->num_sensors*2;
+    int num_start_values = 0;
+    
+    for (int i=0; i<sensors->num_sensors; i++)
+    {
+        temp_values[i*2]=sensors->sensors[i].min_row_covered;
+        temp_values[i*2+1]=sensors->sensors[i].max_row_covered+1;
+#ifdef DEBUG_DAY_15
+        printf("Added %ld and %ld to temp_values from sensor %d\n", temp_values[i*2], temp_values[i*2+1], i);
+#endif
+    }
+    
+    temp_values[num_temp_values] = 0;
+    temp_values[num_temp_values+1] = max_row_col+1;
+    num_temp_values+=2;
+#ifdef DEBUG_DAY_15
+    printf("Added 0 and %ld to temp_values as limits\n", max_row_col+1);
+#endif
+    
+    while (1)
+    {
+#ifdef DEBUG_DAY_15
+        printf("Setting position %d in group_start_values\n", num_start_values);
+#endif
+        group_start_values[num_start_values] = LONG_MAX;
+        for (int i=0; i<num_temp_values; i++)
+        {
+            if ( (num_start_values == 0 || 
+                  temp_values[i] > group_start_values[num_start_values-1]) && 
+                temp_values[i] < group_start_values[num_start_values])
+            {
+                group_start_values[num_start_values] = temp_values[i];
+#ifdef DEBUG_DAY_15
+                printf(" Assigning %ld\n", group_start_values[num_start_values]);
+#endif
+            }
+        }
+        if (group_start_values[num_start_values] == LONG_MAX)
+        {
+#ifdef DEBUG_DAY_15
+            printf(" Nothing set; breaking and not incrementing counter\n");
+#endif
+            break;
+        }
+#ifdef DEBUG_DAY_15
+        printf(" Final value %ld; incrementing counter\n", group_start_values[num_start_values]);
+#endif
+        num_start_values++;
+    }
+    
+#ifdef DEBUG_DAY_15
+    printf("Making groups\n");
+#endif
+    sensor_groups->num_sensor_groups = 0;
+    for (int i=0; i<num_start_values; i++)
+    {
+        if (group_start_values[i] < 0 || group_start_values[i] > max_row_col)
+        {
+#ifdef DEBUG_DAY_15
+            printf("Skipping group with start value %ld\n", group_start_values[i]);
+#endif
+            continue;
+        }
+#ifdef DEBUG_DAY_15
+        printf("Creating group %d with start value %ld and end value %ld\n", sensor_groups->num_sensor_groups, group_start_values[i], group_start_values[i+1]-1);
+#endif
+        day_15_sensor_group_t * current_group = &sensor_groups->sensor_groups[sensor_groups->num_sensor_groups];
+        current_group->min_row = group_start_values[i];
+        current_group->max_row = group_start_values[i+1]-1;
+        current_group->num_sensors = 0;
+        for (int j=0; j<sensors->num_sensors; j++)
+        {
+            if (sensors->sensors[j].min_row_covered > current_group->max_row)
+            {
+#ifdef DEBUG_DAY_15
+                printf(" Sensor %d from rows %ld to %ld is after this group. skipping\n", j, sensors->sensors[j].min_row_covered, sensors->sensors[j].max_row_covered);
+#endif
+            }
+            else if (sensors->sensors[j].max_row_covered < current_group->max_row)
+            {
+#ifdef DEBUG_DAY_15
+                printf(" Sensor %d from rows %ld to %ld is before this group. skipping\n", j, sensors->sensors[j].min_row_covered, sensors->sensors[j].max_row_covered);
+#endif
+            }
+            else
+            {
+#ifdef DEBUG_DAY_15
+                printf(" Sensor %d from rows %ld to %ld is in this group. Including at group position %d\n", j, sensors->sensors[j].min_row_covered, sensors->sensors[j].max_row_covered, current_group->num_sensors);
+#endif
+                current_group->sensors[current_group->num_sensors]=&sensors->sensors[j];
+                current_group->num_sensors++;
+            }
+        }
+        sensor_groups->num_sensor_groups++;
+    }
+    
+}
+
 void day_15_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     if (extra_args->num_extra_args != 1)
@@ -233,3 +345,35 @@ void day_15_part_1(char * filename, extra_args_t * extra_args, char * result)
     return;
 }
 
+void day_15_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    if (extra_args->num_extra_args != 1)
+    {
+        fprintf(stderr, "One extra argument for the upper limit of coorindates to search is required for Day 15 Part 1\n");
+        return;
+    }
+
+    long max_row_col = strtol(extra_args->extra_args[0], NULL, 10);
+    
+    printf("Will be searching from 0 to %ld for Day 15 Part 2\n", max_row_col);
+    
+    day_15_sensors_t sensors;
+    day_15_sensor_groups_t sensor_groups;
+    
+    if (parse_input(filename, &sensors) != TRUE)
+    {
+        fprintf(stderr, "Error parsing input %s\n", filename);
+    }
+    
+    for (int i=0; i<sensors.num_sensors; i++)
+    {
+        determine_distance_apart(&sensors.sensors[i]);
+        calculate_min_max_rows_covered(&sensors.sensors[i]);
+    }
+    
+    create_sensor_groups(&sensor_groups, &sensors, max_row_col);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%ld", 0);
+    
+    return;
+}

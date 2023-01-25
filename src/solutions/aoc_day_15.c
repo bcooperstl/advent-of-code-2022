@@ -145,6 +145,104 @@ static long calculate_number_excluded(day_15_sensors_t * sensors, long target_ro
     return sum;
 }
 
+static int is_row_complete(day_15_sensor_group_t * sensor_group, long row, long * missing_col, long max_checked_col)
+{
+    for (int i=0; i<sensor_group->num_sensors; i++)
+    {
+        day_15_sensor_t * sensor = sensor_group->sensors[i];
+        sensor->min_col_in_taget_row_covered = sensor->sensor_x - (sensor->distance_apart - labs(sensor->sensor_y - row));
+        sensor->max_col_in_taget_row_covered = sensor->sensor_x + (sensor->distance_apart - labs(sensor->sensor_y - row));
+#ifdef DEBUG_DAY_15
+        printf("  Sensor at (%ld,%ld) with distance apart %ld has min_col %ld and max_col %ld\n", sensor->sensor_x, sensor->sensor_y, sensor->distance_apart, sensor->min_col_in_taget_row_covered, sensor->max_col_in_taget_row_covered);
+#endif        
+    }
+    
+    long last_max = LONG_MIN;
+    long minimums[5];
+    long maximums[5];
+    int current_min_max_idx = 0;
+    while (1)
+    {
+        int found_range = FALSE;
+        minimums[current_min_max_idx] = LONG_MAX;
+#ifdef DEBUG_DAY_15
+        printf("  Checking for a range where last_max is %ld with current_min_max_idx=%d\n", last_max, current_min_max_idx);
+#endif
+        // find the lowest min greater than last_max
+        for (int i=0; i<sensor_group->num_sensors; i++)
+        {
+            if (sensor_group->sensors[i]->min_col_in_taget_row_covered > last_max &&
+                sensor_group->sensors[i]->min_col_in_taget_row_covered < minimums[current_min_max_idx])
+            {
+#ifdef DEBUG_DAY_15
+                printf("   Found range from %ld-%ld that has new lowest min value greater than last_max\n", sensor_group->sensors[i]->min_col_in_taget_row_covered, sensor_group->sensors[i]->max_col_in_taget_row_covered);
+#endif
+                minimums[current_min_max_idx] = sensor_group->sensors[i]->min_col_in_taget_row_covered;
+                maximums[current_min_max_idx] = sensor_group->sensors[i]->max_col_in_taget_row_covered;
+                found_range = TRUE;
+            }
+        }
+
+        if (found_range == FALSE)
+        {
+#ifdef DEBUG_DAY_15
+            printf("   No range found. Done partitioning\n");
+#endif
+            break;
+        }
+        
+        int expanded_range;
+        do
+        {
+            expanded_range = FALSE;
+            for (int i=0; i<sensor_group->num_sensors; i++)
+            {
+                if (sensor_group->sensors[i]->min_col_in_taget_row_covered >= minimums[current_min_max_idx] && 
+                    sensor_group->sensors[i]->min_col_in_taget_row_covered <= (maximums[current_min_max_idx] + 1))
+                {
+                    if (sensor_group->sensors[i]->max_col_in_taget_row_covered > maximums[current_min_max_idx])
+                    {
+                        maximums[current_min_max_idx] = sensor_group->sensors[i]->max_col_in_taget_row_covered;
+#ifdef DEBUG_DAY_15
+                        printf("   Range from %ld-%ld expands max; new current range is %ld-%ld\n", sensor_group->sensors[i]->min_col_in_taget_row_covered, sensor_group->sensors[i]->max_col_in_taget_row_covered, minimums[current_min_max_idx], maximums[current_min_max_idx]);
+#endif
+                        expanded_range = TRUE;
+                    }
+                }
+            }
+        } while (expanded_range == TRUE);
+        
+        last_max = maximums[current_min_max_idx];
+        current_min_max_idx++;
+    }
+    
+    if (current_min_max_idx == 1)
+    {
+        if (minimums[0] <= 0 && maximums[0] >= max_checked_col)
+        {
+#ifdef DEBUG_DAY_15
+            printf(" One good range found. This row is completely excluded\n");
+#endif
+            return TRUE;
+        }
+    }
+    else if (current_min_max_idx == 2)
+    {
+        if (minimums[0] <= 0 && maximums[1] >= max_checked_col && (minimums[1] - maximums[0] == 2))
+        {
+#ifdef DEBUG_DAY_15
+            printf(" Two ranges with one empty cell found. Empty column is at %ld\n", maximums[0]+1);
+#endif
+            *missing_col = maximums[0]+1;
+            return FALSE;
+        }
+    }
+    
+    fprintf(stderr, "!!!!Need more logic in is_row_complete for row %ld!!!!!\n", row);
+    return TRUE;
+}
+
+
 static int parse_input(char * filename, day_15_sensors_t * sensors)
 {
     file_data_t fd;
@@ -373,7 +471,28 @@ void day_15_part_2(char * filename, extra_args_t * extra_args, char * result)
     
     create_sensor_groups(&sensor_groups, &sensors, max_row_col);
     
-    snprintf(result, MAX_RESULT_LENGTH+1, "%ld", 0);
+    long missing_col = LONG_MIN;
+    long tuning_frequency = LONG_MIN;
+    
+    for (int i=0; i<sensor_groups.num_sensor_groups; i++)
+    {
+#ifdef DEBUG_DAY_15
+        printf("Checking sensor group %d - rows %ld to %ld\n", i, sensor_groups.sensor_groups[i].min_row, sensor_groups.sensor_groups[i].max_row);
+#endif
+        for (long row=sensor_groups.sensor_groups[i].min_row; row<=sensor_groups.sensor_groups[i].max_row; row++)
+        {
+#ifdef DEBUG_DAY_15
+            printf(" Checking row %ld\n", row);
+#endif
+            if (is_row_complete(&sensor_groups.sensor_groups[i], row, &missing_col, max_row_col) == FALSE)
+            {
+                tuning_frequency = (4000000L * missing_col) + row;
+                printf("Missing column at row %ld column %ld results in tuning frequency of %ld\n", row, missing_col, tuning_frequency);
+            }
+        }
+    }
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%ld", tuning_frequency);
     
     return;
 }

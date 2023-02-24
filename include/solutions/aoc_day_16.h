@@ -14,7 +14,7 @@ struct day_16_valve
 {
     char label[DAY_16_LABEL_LENGTH+1];
     int flow_rate;
-    struct day_16_valve neighbors[DAY_16_MAX_NEIGHBORS];
+    struct day_16_valve * neighbors[DAY_16_MAX_NEIGHBORS];
     int num_neighbors;
     int all_index;
     int important_index;
@@ -24,11 +24,11 @@ typedef struct day_16_valve day_16_valve_t;
 
 struct day_16_valves
 {
-    day_16_valve_t all_valves;
+    day_16_valve_t all_valves[DAY_16_MAX_VALVES];
     int num_all_valves;
-    day_16_valve_t * important_valves;
+    day_16_valve_t * important_valves[DAY_16_MAX_IMPORTANT_VALVES];
     int num_important_valves;
-    day_16_value_t * start_valve;
+    day_16_valve_t * start_valve;
 };
 
 typedef struct day_16_valves day_16_valves_t;
@@ -36,13 +36,13 @@ typedef struct day_16_valves day_16_valves_t;
 struct day_16_valve_distance_maps
 {
     // indexes are from, to
-    int all_distances_map[DAY_16_MAX_VALVES][DAY_16_MAX_VALVES];
+    int all_distances[DAY_16_MAX_VALVES][DAY_16_MAX_VALVES];
     
     // indexes are from, to
-    int important_distances_map[DAY_16_MAX_IMPORTANT_VALVES][DAY_16_MAX_IMPORTANT_VALVES];
+    int important_distances[DAY_16_MAX_IMPORTANT_VALVES][DAY_16_MAX_IMPORTANT_VALVES];
     
     // index is to
-    int start_distances_map[DAY_16_MAX_IMPORTANT_VALVES];
+    int start_distances[DAY_16_MAX_IMPORTANT_VALVES];
     int num_all_distances;
     int num_important_distances;
 };
@@ -61,7 +61,7 @@ typedef struct day_16_path day_16_path_t;
 
 struct day_16_path_pages
 {
-    struct day_16_path_t * paths[DAY_16_MAX_IMPORTANT_VALVES];
+    day_16_path_t * paths[DAY_16_MAX_IMPORTANT_VALVES];
     int num_paths_used[DAY_16_MAX_IMPORTANT_VALVES];
 };
 

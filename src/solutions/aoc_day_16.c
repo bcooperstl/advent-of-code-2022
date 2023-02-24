@@ -24,7 +24,7 @@ static int parse_input(char * filename, day_16_valves_t * valves)
     {
         fprintf(stderr, "Error reading in data from %s\n", filename);
         file_data_cleanup(&fd);
-        return;
+        return FALSE;
     }
     
     ld = fd.head_line;
@@ -35,7 +35,7 @@ static int parse_input(char * filename, day_16_valves_t * valves)
         valves->all_valves[valves->num_all_valves].label[1] = td->token[7];
         valves->all_valves[valves->num_all_valves].label[2] = '\0';
         valves->all_valves[valves->num_all_valves].flow_rate = strtol(td->token+23, NULL, 10);
-#ifdef DEBUG_DAY_13_PARSE
+#ifdef DEBUG_DAY_16_PARSE
         printf("Valve %d created with label %s and flow rate %d\n", 
                valves->num_all_valves, valves->all_valves[valves->num_all_valves].label,
                valves->all_valves[valves->num_all_valves].flow_rate);
@@ -86,6 +86,7 @@ static int parse_input(char * filename, day_16_valves_t * valves)
     for (int i=0; i<valves->num_all_valves; i++)
     {
         valves->all_valves[i].all_index = i;
+        day_16_valve_t * valve = &valves->all_valves[i];
 #ifdef DEBUG_DAY_16_PARSE
         printf(" Valve %s gets all_index %d\n", valve->label, valve->all_index);
 #endif
@@ -108,6 +109,7 @@ static int parse_input(char * filename, day_16_valves_t * valves)
             valves->num_important_valves++;
         }
     }
+    return TRUE;
 }
 
 static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valves_t * valves)
@@ -124,7 +126,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
         {
             distances->all_distances[from][to] = -1;
         }
-        distances->all_distances[from][to] = 0;
+        distances->all_distances[from][from] = 0;
         int current_distance = 0;
         while (1)
         {
@@ -133,7 +135,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
 #endif
             for (int to=0; to<valves->num_all_valves; to++)
             {
-                if (distances->all_distances[from][to] == current_distnace)
+                if (distances->all_distances[from][to] == current_distance)
                 {
 #ifdef DEBUG_DAY_16_DISTANCES
                     printf(" Valve %d(%s) matches. checking its neighbors\n", to, valves->all_valves[to].label);
@@ -155,7 +157,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
 #ifdef DEBUG_DAY_16_DISTANCES
                             printf("  Neighbor %d(%s) doealready has distance of %d\n",
                                   neighbor_valve->all_index, neighbor_valve->label, 
-                                  distances->all_distances[from][neighbor_valve->all_index];
+                                  distances->all_distances[from][neighbor_valve->all_index]);
 #endif
                         }
                     }
@@ -183,7 +185,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
     {
         for (int to=0; to<distances->num_important_distances; to++)
         {
-            distances->important_distances[from][to] = all_distances[valves->important_valves[from]->all_index][valves->important_valves[to].all_index];
+            distances->important_distances[from][to] = distances->all_distances[valves->important_valves[from]->all_index][valves->important_valves[to]->all_index];
 #ifdef DEBUG_DAY_16_DISTANCES
             printf("Important distnace from %s to %s is %d\n", 
                    valves->important_valves[from]->label,
@@ -191,7 +193,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
                    distances->important_distances[from][to]);
 #endif
         }
-        distances->start_distances[from] = all_distances[valves->start_valve->all_index][valves->important_valves[from].all_index];
+        distances->start_distances[from] = distances->all_distances[valves->start_valve->all_index][valves->important_valves[from]->all_index];
 #ifdef DEBUG_DAY_16_DISTANCES
     printf("Start distnace to %s is %d\n", 
                    valves->important_valves[from]->label,
@@ -264,14 +266,14 @@ static void init_path(day_16_path_t * path)
     {
         path->used[i] = FALSE;
     }
-    path->complete = FALSE;
-    path->current_position = -1;
+        path->current_position = -1;
     path->minutes_remaining = 30;
     path->total_pressure = 0;
 }
 
 static void copy_path(day_16_path_t * to, day_16_path_t * from)
 {
+/*
     for (int i=0; i<DAY_16_MAX_IMPORTANT_VALVES; i++)
     {
         to->used[i] = from->used[i];
@@ -280,6 +282,8 @@ static void copy_path(day_16_path_t * to, day_16_path_t * from)
     to->current_position = from->current_position;
     to->minutes_remaining = from->minutes_remaining;
     to->total_pressure = from->total_pressure;
+*/
+    memcpy(to, from, sizeof(day_16_path_t));
 }
 
 static void init_path_pages(day_16_path_pages_t * pages)
@@ -300,8 +304,8 @@ static void cleanup_path_pages(day_16_path_pages_t * pages)
             free(pages->paths[i]);
             pages->paths[i] = NULL;
         }
+        pages->num_paths_used[i] = 0;
     }
-    pages->num_paths_used[i] = 0;
 }
 
 static int find_best_pressure(day_16_path_pages_t * pages)
@@ -309,7 +313,7 @@ static int find_best_pressure(day_16_path_pages_t * pages)
     int best = 0;
     for (int i=0; i<DAY_16_MAX_IMPORTANT_VALVES; i++)
     {
-        for (int j=0; j<pages->num_paths_used[i] j++)
+        for (int j=0; j<pages->num_paths_used[i]; j++)
         {
             if (pages->paths[i][j].total_pressure > best)
             {
@@ -338,9 +342,9 @@ static void init_path_page_at_depth(day_16_path_pages_t * pages, int depth, int 
     }
 }
 
-static void bfs_process_first_level(day_16_distances_t * distances, day_16_valves_t * valves, day_16_path_pages_t * pages)
+static void bfs_process_first_level(day_16_valve_distance_maps_t * distances, day_16_valves_t * valves, day_16_path_pages_t * pages)
 {
-    int num_important = distances->num_important_valves;
+    int num_important = valves->num_important_valves;
 #ifdef DEBUG_DAY_16_BFS
     printf("Initializing BFS search at depth 0 for %d important valves; moves from start\n", num_important);
 #endif
@@ -353,7 +357,7 @@ static void bfs_process_first_level(day_16_distances_t * distances, day_16_valve
 
         day_16_path_t * current_path = &pages->paths[0][i];
         init_path(current_path);
-        int minutes_to_travel = distances->start_distances_map[i];
+        int minutes_to_travel = distances->start_distances[i];
         current_path->used[i] = TRUE;
         current_path->current_position = i;
         current_path->minutes_remaining -= (minutes_to_travel + 1);
@@ -367,9 +371,9 @@ static void bfs_process_first_level(day_16_distances_t * distances, day_16_valve
     }
 }
 
-static void bfs_process_level(day_16_distances_t * distances, day_16_valves_t * valves, day_16_path_pages_t * pages, int depth)
+static void bfs_process_level(day_16_valve_distance_maps_t * distances, day_16_valves_t * valves, day_16_path_pages_t * pages, int depth)
 {
-    int num_important = distances->num_important_valves;
+    int num_important = valves->num_important_valves;
 #ifdef DEBUG_DAY_16_BFS
     printf("Initializing BFS search at depth %d for %d paths at depth %d\n", depth, pages->num_paths_used[depth-1], depth-1);
 #endif
@@ -377,12 +381,12 @@ static void bfs_process_level(day_16_distances_t * distances, day_16_valves_t * 
 
     for (int from_idx=0; from_idx <= pages->num_paths_used[depth-1]; from_idx++)
     {
-        day_16_path_t * from = *pages->paths[depth-1][from_idx];
+        day_16_path_t * from = &pages->paths[depth-1][from_idx];
 #ifdef DEBUG_DAY_16_BFS
         printf(" Processing moves from [%d,%d] (at %s)\n", depth-1, from_idx, valves->important_valves[from->current_position]->label);
 #endif
         
-        for (int to_idx=0; i<num_important; i++)
+        for (int to_idx=0; to_idx<num_important; to_idx++)
         {
 #ifdef DEBUG_DAY_16_BFS
             printf("  Checking move to %s\n", valves->important_valves[to_idx]->label);
@@ -394,7 +398,7 @@ static void bfs_process_level(day_16_distances_t * distances, day_16_valves_t * 
 #endif
                 continue;
             }
-            int minutes_to_travel = distances->important_distances_map[from->current_position][to_idx];
+            int minutes_to_travel = distances->important_distances[from->current_position][to_idx];
 #ifdef DEBUG_DAY_16_BFS
             printf("   It will take %d minutes to travel from %s to %s\n", valves->important_valves[from->current_position]->label, valves->important_valves[to_idx]->label);
 #endif
@@ -425,7 +429,7 @@ static void bfs_process_level(day_16_distances_t * distances, day_16_valves_t * 
 void day_16_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     day_16_valves_t valves;
-    day_16_distances_t distances;
+    day_16_valve_distance_maps_t distances;
     day_16_path_pages_t path_pages;
     
     // read in the input file to valves

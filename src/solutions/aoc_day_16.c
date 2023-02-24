@@ -155,7 +155,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
                         else
                         {
 #ifdef DEBUG_DAY_16_DISTANCES
-                            printf("  Neighbor %d(%s) doealready has distance of %d\n",
+                            printf("  Neighbor %d(%s) already has distance of %d\n",
                                   neighbor_valve->all_index, neighbor_valve->label, 
                                   distances->all_distances[from][neighbor_valve->all_index]);
 #endif
@@ -168,9 +168,6 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
             {
                 if (distances->all_distances[from][to] == -1)
                 {
-#ifdef DEBUG_DAY_16_DISTANCES
-                    printf("  All not processesd because from %d to %d is not set\n", from, to);
-#endif
                     all_processed = FALSE;
                 }
             }
@@ -191,7 +188,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
         {
             distances->important_distances[from][to] = distances->all_distances[valves->important_valves[from]->all_index][valves->important_valves[to]->all_index];
 #ifdef DEBUG_DAY_16_DISTANCES
-            printf("Important distnace from %s to %s is %d\n", 
+            printf("Important distance from %s to %s is %d\n", 
                    valves->important_valves[from]->label,
                    valves->important_valves[to]->label,
                    distances->important_distances[from][to]);
@@ -199,7 +196,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
         }
         distances->start_distances[from] = distances->all_distances[valves->start_valve->all_index][valves->important_valves[from]->all_index];
 #ifdef DEBUG_DAY_16_DISTANCES
-    printf("Start distnace to %s is %d\n", 
+    printf("Start distance to %s is %d\n", 
                    valves->important_valves[from]->label,
                    distances->start_distances[from]);
 #endif
@@ -383,11 +380,11 @@ static void bfs_process_level(day_16_valve_distance_maps_t * distances, day_16_v
 #endif
     init_path_page_at_depth(pages, depth, num_important);
 
-    for (int from_idx=0; from_idx <= pages->num_paths_used[depth-1]; from_idx++)
+    for (int from_idx=0; from_idx < pages->num_paths_used[depth-1]; from_idx++)
     {
         day_16_path_t * from = &pages->paths[depth-1][from_idx];
 #ifdef DEBUG_DAY_16_BFS
-        printf(" Processing moves from [%d,%d] (at %s)\n", depth-1, from_idx, valves->important_valves[from->current_position]->label);
+        printf(" Processing moves from [%d,%d] (at %s) with %d minutes remaining\n", depth-1, from_idx, valves->important_valves[from->current_position]->label, from->minutes_remaining);
 #endif
         
         for (int to_idx=0; to_idx<num_important; to_idx++)
@@ -404,7 +401,7 @@ static void bfs_process_level(day_16_valve_distance_maps_t * distances, day_16_v
             }
             int minutes_to_travel = distances->important_distances[from->current_position][to_idx];
 #ifdef DEBUG_DAY_16_BFS
-            printf("   It will take %d minutes to travel from %s to %s\n", valves->important_valves[from->current_position]->label, valves->important_valves[to_idx]->label);
+            printf("   It will take %d minutes to travel from %s to %s\n", minutes_to_travel, valves->important_valves[from->current_position]->label, valves->important_valves[to_idx]->label);
 #endif
             if ((minutes_to_travel + 1) >= from->minutes_remaining)
             {
@@ -415,7 +412,7 @@ static void bfs_process_level(day_16_valve_distance_maps_t * distances, day_16_v
             }
             
             day_16_path_t * current_path = &pages->paths[depth][pages->num_paths_used[depth]];
-            copy_path(from, current_path);
+            copy_path(current_path, from);
             current_path->used[to_idx] = TRUE;
             current_path->current_position = to_idx;
             current_path->minutes_remaining -= (minutes_to_travel + 1);
@@ -449,8 +446,6 @@ void day_16_part_1(char * filename, extra_args_t * extra_args, char * result)
 #ifdef DEBUG_DAY_16
     printf("Distances mapped\n");
 #endif
-    
-    return;
     
     init_path_pages(&path_pages);
     

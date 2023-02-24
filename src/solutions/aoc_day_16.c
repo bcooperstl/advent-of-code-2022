@@ -117,7 +117,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
     distances->num_all_distances = valves->num_all_valves;
     distances->num_important_distances = valves->num_important_valves;
     
-    for (int from=0; from<=valves->num_all_valves; from++)
+    for (int from=0; from<valves->num_all_valves; from++)
     {
 #ifdef DEBUG_DAY_16_DISTANCES
         printf("Computing distances from value %d(%s)\n", from, valves->all_valves[from].label);
@@ -168,6 +168,9 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
             {
                 if (distances->all_distances[from][to] == -1)
                 {
+#ifdef DEBUG_DAY_16_DISTANCES
+                    printf("  All not processesd because from %d to %d is not set\n", from, to);
+#endif
                     all_processed = FALSE;
                 }
             }
@@ -175,6 +178,7 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
             {
                 break;
             }
+            current_distance++;
         }
     }
     
@@ -439,14 +443,14 @@ void day_16_part_1(char * filename, extra_args_t * extra_args, char * result)
     printf("Input file had %d total values and %d important valves\n", valves.num_all_valves, valves.num_important_valves);
 #endif
     
-    return;
-    
     // create the distance map
     
     map_distances(&distances, &valves);
 #ifdef DEBUG_DAY_16
     printf("Distances mapped\n");
 #endif
+    
+    return;
     
     init_path_pages(&path_pages);
     

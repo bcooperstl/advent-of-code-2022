@@ -420,3 +420,274 @@ void day_16_part_1(char * filename, extra_args_t * extra_args, char * result)
     return;
 }
 
+static void init_path_2(day_16_path_2_t * path)
+{
+    for (int i=0; i<DAY_16_MAX_IMPORTANT_VALVES; i++)
+    {
+        path->used[i] = FALSE;
+    }
+    path->current_position[0] = -1;
+    path->current_position[0] = -1;
+    path->minutes_remaining[0] = 26;
+    path->minutes_remaining[1] = 26;
+    path->total_pressure = 0;
+}
+
+static void copy_path_2(day_16_path_2_t * to, day_16_path_2_t * from)
+{
+    memcpy(to, from, sizeof(day_16_path_2_t));
+}
+
+static void init_path_pages_2(day_16_path_pages_2_t * pages)
+{
+    for (int i=0; i<DAY_16_MAX_IMPORTANT_VALVES; i++)
+    {
+        pages->paths[i] = NULL;
+        pages->num_paths_used[i] = 0;
+    }
+}
+
+static void cleanup_path_pages_2(day_16_path_pages_2_t * pages)
+{
+    for (int i=0; i<DAY_16_MAX_IMPORTANT_VALVES; i++)
+    {
+        if (pages->paths[i] != NULL)
+        {
+            free(pages->paths[i]);
+            pages->paths[i] = NULL;
+        }
+        pages->num_paths_used[i] = 0;
+    }
+}
+
+static int find_best_pressure_2(day_16_path_pages_2_t * pages)
+{
+    int best = 0;
+    for (int i=0; i<DAY_16_MAX_IMPORTANT_VALVES; i++)
+    {
+        for (int j=0; j<pages->num_paths_used[i]; j++)
+        {
+            if (pages->paths[i][j].total_pressure > best)
+            {
+                best = pages->paths[i][j].total_pressure;
+#ifdef DEBUG_DAY_16
+                printf("New best pressure of %d found at [%d][%d]\n", best, i ,j);
+#endif
+            }
+        }
+    }
+    return best;
+}
+
+static void init_path_page_at_depth_2(day_16_path_pages_2_t * pages, int depth, int num_important)
+{
+    int num_to_allocate;
+    if (depth == 0)
+    {
+        // first level - will need to declare (num_important * num_important - 1)/2 paths
+        num_to_allocate = (num_important * (num_important - 1)) / 2;
+    }
+    else
+    {
+        // other levels - need to have up to (num_important - depth) * 2 possible paths for each path used at the prior level
+        // need 2 for each prior one because of 2 different items to visit each location
+        num_to_allocate = pages->num_paths_used[depth - 1] * (num_important - depth) * 2;
+        
+    }
+    pages->paths[depth] = (day_16_path_2_t *)malloc(sizeof(day_16_path_2_t) * num_to_allocate);
+}
+
+static void bfs_process_first_level_2(day_16_valve_distance_maps_t * distances, day_16_valves_t * valves, day_16_path_pages_2_t * pages)
+{
+    int num_important = valves->num_important_valves;
+#ifdef DEBUG_DAY_16_BFS
+    printf("Initializing BFS search at depth 0 for %d important valves; moves from start\n", num_important);
+#endif
+    init_path_page_at_depth_2(pages, 0, num_important);
+    for (int i=0; i<num_important-1; i++)
+    {
+        for (int j=i+1; j<num_important; j++)
+        {
+
+#ifdef DEBUG_DAY_16_BFS
+            printf(" Processing move with 0 from start to %s and 1 from start to %s to be stored at [%d,%d]\n", valves->important_valves[i]->label, valves->important_valves[j]->label, 0, i);
+#endif
+            // path_index is 
+            day_16_path_2_t * current_path = &pages->paths[0][pages->num_paths_used[0]];
+
+            init_path_2(current_path);
+            // do 0 with i
+            int minutes_to_travel = distances->start_distances[i];
+            current_path->used[i] = TRUE;
+            current_path->current_position[0] = i;
+            current_path->minutes_remaining[0] -= (minutes_to_travel + 1);
+            int added_pressure = valves->important_valves[i]->flow_rate * current_path->minutes_remaining[0];
+            current_path->total_pressure += added_pressure;
+#ifdef DEBUG_DAY_16_BFS
+            printf("  It took %d minutes for 0 to travel and 1 minute to open the valve, resulting in %d minutes remaining\n", minutes_to_travel, current_path->minutes_remaining[0]);
+            printf("  %d minutes of %d flow_rate adds %d current pressure, resulting in %d total pressure released\n", current_path->minutes_remaining[0], valves->important_valves[i]->flow_rate, added_pressure, current_path->total_pressure);
+#endif
+            
+            // do 1 with j
+            minutes_to_travel = distances->start_distances[j];
+            current_path->used[j] = TRUE;
+            current_path->current_position[1] = j;
+            current_path->minutes_remaining[1] -= (minutes_to_travel + 1);
+            added_pressure = valves->important_valves[j]->flow_rate * current_path->minutes_remaining[1];
+            current_path->total_pressure += added_pressure;
+#ifdef DEBUG_DAY_16_BFS
+            printf("  It took %d minutes for 1 to travel and 1 minute to open the valve, resulting in %d minutes remaining\n", minutes_to_travel, current_path->minutes_remaining[1]);
+            printf("  %d minutes of %d flow_rate adds %d current pressure, resulting in %d total pressure released\n", current_path->minutes_remaining[1], valves->important_valves[j]->flow_rate, added_pressure, current_path->total_pressure);
+#endif
+
+            pages->num_paths_used[0]++;
+        }
+    }
+}
+
+static void bfs_process_level_2(day_16_valve_distance_maps_t * distances, day_16_valves_t * valves, day_16_path_pages_2_t * pages, int depth)
+{
+    int num_important = valves->num_important_valves;
+#ifdef DEBUG_DAY_16_BFS
+    printf("Initializing BFS search at depth %d for %d paths at depth %d\n", depth, pages->num_paths_used[depth-1], depth-1);
+#endif
+    init_path_page_at_depth_2(pages, depth, num_important);
+
+    for (int from_idx=0; from_idx < pages->num_paths_used[depth-1]; from_idx++)
+    {
+        day_16_path_2_t * from = &pages->paths[depth-1][from_idx];
+#ifdef DEBUG_DAY_16_BFS
+        printf(" Processing moves from [%d,%d]:  0 at %s with %d minutes remaining and 1 at %s with %d minutes remaining\n", depth-1, from_idx, valves->important_valves[from->current_position[0]]->label, from->minutes_remaining[0], valves->important_valves[from->current_position[1]]->label, from->minutes_remaining[1]);
+#endif
+        
+        for (int to_idx=0; to_idx<num_important; to_idx++)
+        {
+#ifdef DEBUG_DAY_16_BFS
+            printf("  Checking moves to %s\n", valves->important_valves[to_idx]->label);
+#endif
+            if (from->used[to_idx] == TRUE)
+            {
+#ifdef DEBUG_DAY_16_BFS
+                printf("   Valve already visited. Skipping\n");
+#endif
+                continue;
+            }
+            
+            // check 0
+            int minutes_to_travel = distances->important_distances[from->current_position[0]][to_idx];
+#ifdef DEBUG_DAY_16_BFS
+            printf("   It will take %d minutes for 0 to travel from %s to %s\n", minutes_to_travel, valves->important_valves[from->current_position[0]]->label, valves->important_valves[to_idx]->label);
+#endif
+            if ((minutes_to_travel + 1) >= from->minutes_remaining[0])
+            {
+#ifdef DEBUG_DAY_16_BFS
+                printf("   With only %d minutes remaining, the valve will not flow before time runs out. Skipping\n", from->minutes_remaining[0]);
+#endif
+            }
+            else
+            {
+                day_16_path_2_t * current_path = &pages->paths[depth][pages->num_paths_used[depth]];
+                copy_path_2(current_path, from);
+                current_path->used[to_idx] = TRUE;
+                current_path->current_position[0] = to_idx;
+                current_path->minutes_remaining[0] -= (minutes_to_travel + 1);
+                int added_pressure = valves->important_valves[to_idx]->flow_rate * current_path->minutes_remaining[0];
+                current_path->total_pressure += added_pressure;
+                pages->num_paths_used[depth]++;
+#ifdef DEBUG_DAY_16_BFS
+                printf("   It took %d minutes to travel and 1 minute to open the valve, resulting in %d minutes remaining\n", minutes_to_travel, current_path->minutes_remaining[0]);
+                printf("   %d minutes of %d flow_rate adds %d current pressure, resulting in %d total pressure released\n", current_path->minutes_remaining[0], valves->important_valves[to_idx]->flow_rate, added_pressure, current_path->total_pressure);
+#endif
+            }
+            
+            // check 1
+            minutes_to_travel = distances->important_distances[from->current_position[1]][to_idx];
+#ifdef DEBUG_DAY_16_BFS
+            printf("   It will take %d minutes for 1 to travel from %s to %s\n", minutes_to_travel, valves->important_valves[from->current_position[1]]->label, valves->important_valves[to_idx]->label);
+#endif
+            if ((minutes_to_travel + 1) >= from->minutes_remaining[1])
+            {
+#ifdef DEBUG_DAY_16_BFS
+                printf("   With only %d minutes remaining, the valve will not flow before time runs out. Skipping\n", from->minutes_remaining[1]);
+#endif
+            }
+            else
+            {
+                day_16_path_2_t * current_path = &pages->paths[depth][pages->num_paths_used[depth]];
+                copy_path_2(current_path, from);
+                current_path->used[to_idx] = TRUE;
+                current_path->current_position[1] = to_idx;
+                current_path->minutes_remaining[1] -= (minutes_to_travel + 1);
+                int added_pressure = valves->important_valves[to_idx]->flow_rate * current_path->minutes_remaining[1];
+                current_path->total_pressure += added_pressure;
+                pages->num_paths_used[depth]++;
+#ifdef DEBUG_DAY_16_BFS
+                printf("   It took %d minutes to travel and 1 minute to open the valve, resulting in %d minutes remaining\n", minutes_to_travel, current_path->minutes_remaining[1]);
+                printf("   %d minutes of %d flow_rate adds %d current pressure, resulting in %d total pressure released\n", current_path->minutes_remaining[1], valves->important_valves[to_idx]->flow_rate, added_pressure, current_path->total_pressure);
+#endif
+            }
+        }
+    }
+}
+
+void day_16_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_16_valves_t valves;
+    day_16_valve_distance_maps_t distances;
+    day_16_path_pages_2_t path_pages;
+    
+    // read in the input file to valves
+    
+    parse_input(filename, &valves);
+#ifdef DEBUG_DAY_16
+    printf("Input file had %d total values and %d important valves\n", valves.num_all_valves, valves.num_important_valves);
+#endif
+    
+    // create the distance map
+    
+    map_distances(&distances, &valves);
+#ifdef DEBUG_DAY_16
+    printf("Distances mapped\n");
+#endif
+    
+    init_path_pages_2(&path_pages);
+    
+#ifdef DEBUG_DAY_16
+    printf("Initializing search at depth 0\n");
+#endif
+    
+    bfs_process_first_level_2(&distances, &valves, &path_pages);
+    
+    int depth=1;
+    while (depth < valves.num_important_valves)
+    {
+#ifdef DEBUG_DAY_16
+        printf("Search at depth %d had %d paths\n", depth-1, path_pages.num_paths_used[depth-1]);
+#endif
+        if (path_pages.num_paths_used[depth-1] == 0)
+        {
+#ifdef DEBUG_DAY_16
+            printf("Nothing left to do. Stopping search\n");
+#endif
+            break;
+        }
+#ifdef DEBUG_DAY_16
+        printf("Searching at depth %d\n", depth);
+#endif
+        bfs_process_level_2(&distances, &valves, &path_pages, depth);
+        depth++;
+    }
+    
+#ifdef DEBUG_DAY_16
+    printf("Searching complete. Finding best pressure\n");
+#endif
+    
+    int best = find_best_pressure_2(&path_pages);
+    
+    cleanup_path_pages_2(&path_pages);
+
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", best);
+    
+    return;
+}
+

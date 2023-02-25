@@ -67,7 +67,25 @@ struct day_16_path_pages
 
 typedef struct day_16_path_pages day_16_path_pages_t;
 
+struct day_16_path_2
+{
+    char used[DAY_16_MAX_IMPORTANT_VALVES];
+    int current_position[2];
+    int minutes_remaining[2];
+    int total_pressure;
+};
+
+typedef struct day_16_path_2 day_16_path_2_t;
+
+struct day_16_path_pages_2
+{
+    day_16_path_2_t * paths[DAY_16_MAX_IMPORTANT_VALVES];
+    int num_paths_used[DAY_16_MAX_IMPORTANT_VALVES];
+};
+
+typedef struct day_16_path_pages_2 day_16_path_pages_2_t;
+
 void day_16_part_1(char * filename, extra_args_t * extra_args, char * result);
-//void day_16_part_2(char * filename, extra_args_t * extra_args, char * result);
+void day_16_part_2(char * filename, extra_args_t * extra_args, char * result);
 
 #endif

@@ -203,64 +203,6 @@ static void map_distances(day_16_valve_distance_maps_t * distances, day_16_valve
     }
 }
 
-/*
-static int find_best_pressure_sparse_stack(day_16_distances_t * distances, day_16_valves_t * valves)
-{
-    int sparse_stack[30];
-    int best_pressure = 0;
-    printf("Finding best pressure release in 30 minutes with sparse stack\n");
-    for (int i=0; i<sparse_stack; i++)
-    {
-        sparse_stack[i] = -1;
-    }
-    int current_index[DAY_16_MAX_IMPORTANT_VALVES];
-    current_index[0] = 0;
-    while (current_index[0] < distances->num_important_distances)
-    {
-        
-    
-    }
-
-
-}
-
-static int find_best_pressure(day_16_distances_t * distances, day_16_valves_t * valves, int minutes)
-{
-    int best_pressure = 0;
-    printf("Finding best pressure release in %d minutes\n", minutes);
-    
-    int num_important = distances->num_important_distances;
-    int indices[DAY_16_MAX_IMPORTANT_VALVES];
-    int minutes_on[DAY_16_MAX_IMPORTANT_VALVES];
-    int current_depth = 0;
-    int time_remaining = minutes;
-    
-    for (int i=0; i<num_important; i++)
-    {
-        indices[i] = 0;
-        minutes_on[i] = 0;
-        
-    }
-    
-    while (indices[0] < num_important)
-    {
-        printf("Current state - current_depth %d, moving to important index %d = %s\n", current_depth, indices[current_depth], valves->important_valves[indices[current_depth]]->label); 
-        int move_time;
-        if (current_depth == 0)
-        {
-            move_time = distances->start_distances[indices[current_depth]];
-        }
-        else
-        {
-            move_time = distances->all_distances[indices[current_depth-1]][indices[current_depth]];
-        }
-        
-    }
-
-    return best_pressure;
-}
-*/
-
 static void init_path(day_16_path_t * path)
 {
     for (int i=0; i<DAY_16_MAX_IMPORTANT_VALVES; i++)
@@ -274,16 +216,6 @@ static void init_path(day_16_path_t * path)
 
 static void copy_path(day_16_path_t * to, day_16_path_t * from)
 {
-/*
-    for (int i=0; i<DAY_16_MAX_IMPORTANT_VALVES; i++)
-    {
-        to->used[i] = from->used[i];
-    }
-    to->complete = from->complete;
-    to->current_position = from->current_position;
-    to->minutes_remaining = from->minutes_remaining;
-    to->total_pressure = from->total_pressure;
-*/
     memcpy(to, from, sizeof(day_16_path_t));
 }
 

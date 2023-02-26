@@ -70,9 +70,9 @@ typedef struct day_16_path_pages day_16_path_pages_t;
 struct day_16_path_2
 {
     char used[DAY_16_MAX_IMPORTANT_VALVES];
-    int current_position[2];
-    int minutes_remaining[2];
-    int total_pressure;
+    char current_position[2];
+    char minutes_remaining[2];
+    short int total_pressure;
 };
 
 typedef struct day_16_path_2 day_16_path_2_t;
@@ -81,6 +81,7 @@ struct day_16_path_pages_2
 {
     day_16_path_2_t * paths[DAY_16_MAX_IMPORTANT_VALVES];
     int num_paths_used[DAY_16_MAX_IMPORTANT_VALVES];
+    int bests[DAY_16_MAX_IMPORTANT_VALVES];
 };
 
 typedef struct day_16_path_pages_2 day_16_path_pages_2_t;

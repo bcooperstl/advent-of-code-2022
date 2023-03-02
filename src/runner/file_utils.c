@@ -5,7 +5,7 @@
 #include "constants.h"
 #include "file_utils.h"
 
-#define MAX_LINE_LENGTH 4096
+#define MAX_LINE_LENGTH 12000
 
 void token_data_init(token_data_t * td)
 {

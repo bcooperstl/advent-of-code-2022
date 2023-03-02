@@ -74,3 +74,4 @@
 16,2,test_cases/day16_test1.txt,1707
 #below one takes a few minutes to run; skipping
 #16,2,day16_input.txt,2602
+17,1,test_cases/day17_test1.txt,3068

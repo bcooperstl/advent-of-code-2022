@@ -13,7 +13,7 @@
 #define JET_LEFT '<'
 #define JET_RIGHT '>'
 
-#define PART_1_PIECES 25
+#define PART_1_PIECES 2022
 #define PART_2_PIECES 1000000000000ll // long long
 
 static void init_column(day_17_column_t * column)
@@ -36,11 +36,16 @@ static void init_column(day_17_column_t * column)
 
 static void display_column(day_17_column_t * column)
 {
-    for (int i=column->piece_top_row; i<DAY_17_COLUMN_HEIGHT; i++)
+    int start_row = column->piece_top_row;
+    if (column->high_row < column->piece_top_row)
     {
-        printf("|%s|\n", column->map[i]);
+        start_row = column->high_row;
     }
-    printf("+-------+\n");
+    for (int i=start_row; i<DAY_17_COLUMN_HEIGHT; i++)
+    {
+        printf("%04d  |%s|\n", i, column->map[i]);
+    }
+    printf("      +-------+\n");
 }
 
 static void init_piece(day_17_column_t * column)
@@ -347,30 +352,36 @@ static void purge_rows(day_17_column_t * column)
     {
         return;
     }
+    int rows_to_keep = DAY_17_COLUMN_HEIGHT - column->high_row - rows_to_purge;
+    
 #ifdef DEBUG_DAY_17
     printf("BEFORE PURGING; top_row is %d and rows_purged = %lld:\n", column->high_row, column->rows_purged);
     display_column(column);
+    printf("There are %d rows to keep and %d rows to purge\n", rows_to_keep, rows_to_purge);
 #endif
-    for (int i=0; i<rows_to_purge; i++)
+    for (int i=0; i<rows_to_keep; i++)
     {
         int dest_y = DAY_17_COLUMN_HEIGHT - 1 - i;
         int src_y = dest_y - rows_to_purge;
 
 #ifdef DEBUG_DAY_17
-    printf("  copying row %d to %d\n", dest_y, src_y);
+    printf("  copying row %d to %d\n", src_y, dest_y);
 #endif
         strncpy(column->map[dest_y], column->map[src_y], DAY_17_COLUMN_WIDTH+1);
-
+    }
+    for (int i=0; i<rows_to_purge; i++)
+    {
 #ifdef DEBUG_DAY_17
-    printf("  clearing row %d\n", src_y);
+    printf("  clearing row %d\n", column->high_row+i);
 #endif
         for (int x=0; x<DAY_17_COLUMN_WIDTH; x++)
         {
-            column->map[src_y][x] = EMPTY;
+            column->map[column->high_row+i][x] = EMPTY;
         }
     }
     
     column->rows_purged += rows_to_purge;
+    column->high_row += rows_to_purge;
 #ifdef DEBUG_DAY_17
     printf("AFTER PURGING; top_row is %d and rows_purged = %lld:\n", column->high_row, column->rows_purged);
     display_column(column);

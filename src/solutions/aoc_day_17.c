@@ -9,6 +9,7 @@
 #define EMPTY '.'
 #define RESTING '#'
 #define DROPPING '@'
+#define REACHABLE '!'
 
 #define JET_LEFT '<'
 #define JET_RIGHT '>'
@@ -299,55 +300,88 @@ static void finalize_piece(day_17_column_t * column)
     }
 }
 
+static int find_bottom_reachable_row(day_17_column_t * column)
+{
+#ifdef DEBUG_DAY_17
+    printf(" marking reachable rows\n");
+#endif
+    int bottom_reachable_row = column->high_row;
+    
+    // map any empty cells on the top row as reachable
+    for (int x=0; x<DAY_17_COLUMN_WIDTH; x++)
+    {
+        if (column->map[column->high_row][x] == EMPTY)
+        {
+            column->map[column->high_row][x] = REACHABLE;
+        }
+    }
+    
+    
+    for (int row=column->high_row; row<DAY_17_COLUMN_HEIGHT - 1; row++)
+    {
+        // check below for reachable cells
+        for (int x=0; x<DAY_17_COLUMN_WIDTH; x++)
+        {
+            if ((column->map[row][x] == REACHABLE) && (column->map[row+1][x] == EMPTY))
+            {
+                column->map[row+1][x] = REACHABLE;
+                bottom_reachable_row = row+1;
+            }
+        }
+        
+        // check right in next row
+        for (int x=0; x<DAY_17_COLUMN_WIDTH-1; x++)
+        {
+            if ((column->map[row+1][x] == REACHABLE) && (column->map[row+1][x+1] == EMPTY))
+            {
+                column->map[row+1][x+1] = REACHABLE;
+            }
+        }
+        
+        // check left in next row
+        for (int x=DAY_17_COLUMN_WIDTH-1; x>0; x--)
+        {
+            if ((column->map[row+1][x] == REACHABLE) && (column->map[row+1][x-1] == EMPTY))
+            {
+                column->map[row+1][x-1] = REACHABLE;
+            }
+        }
+    }
+#ifdef DEBUG_DAY_17
+    printf("  the rows %d to %d are reachable\n", column->high_row, bottom_reachable_row);
+    display_column(column);
+#endif
+    for (int row=column->high_row; row<=bottom_reachable_row; row++)
+    {
+        for (int x=0; x<DAY_17_COLUMN_WIDTH; x++)
+        {
+            if (column->map[row][x] == REACHABLE)
+            {
+                column->map[row][x] = EMPTY;
+            }
+        }
+    }
+#ifdef DEBUG_DAY_17
+    printf("  restored empty values in reachable cells\n");
+    display_column(column);
+#endif
+    return bottom_reachable_row;
+}
+
+
 static void purge_rows(day_17_column_t * column)
 {
 #ifdef DEBUG_DAY_17
     printf(" trying to purge rows\n");
 #endif
-    int rows_to_purge = DAY_17_COLUMN_HEIGHT;
-    for (int x=0; x<DAY_17_COLUMN_WIDTH; x++)
-    {    
-        int top_resting_row = DAY_17_COLUMN_HEIGHT;
-        for (int y=column->high_row; y<DAY_17_COLUMN_HEIGHT; y++)
-        {
-            if (column->map[y][x] == RESTING)
-            {
-                top_resting_row = y;
-                break;
-            }
-        }
-        if (top_resting_row == DAY_17_COLUMN_HEIGHT)
-        {
+    int bottom_reachable_row = find_bottom_reachable_row(column);
+    
+    int rows_to_purge = DAY_17_COLUMN_HEIGHT - bottom_reachable_row - 1;
+    
 #ifdef DEBUG_DAY_17
-            printf("  column %d does not have any resting pieces. cannot purge rows\n", x);
+    printf(" with bottom_reachable_row = %d, there are %d rows to purge\n", bottom_reachable_row, rows_to_purge);
 #endif
-            rows_to_purge = 0;
-        }
-        else
-        {
-            int col_rows_to_purge = DAY_17_COLUMN_HEIGHT - top_resting_row - 1;
-#ifdef DEBUG_DAY_17
-            printf("  column %d has highest # at row %d; can purge %d rows below it\n", x, top_resting_row, col_rows_to_purge);
-#endif
-            if (col_rows_to_purge < rows_to_purge)
-            {
-                rows_to_purge = col_rows_to_purge;
-#ifdef DEBUG_DAY_17
-                printf("   adjusting overall rows to purge to match column %d\n", x);
-#endif
-            }
-            else
-            {
-#ifdef DEBUG_DAY_17
-                printf("   overall rows to purge is more restrictive %d; not changing for to match column %d\n", rows_to_purge, x);
-#endif
-            }
-        
-        }
-    }
-#ifdef DEBUG_DAY_17
-    printf(" after checking all columns, there are %d rows to purge\n", rows_to_purge);
-#endif
+
     if (rows_to_purge == 0)
     {
         return;

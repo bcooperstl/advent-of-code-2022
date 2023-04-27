@@ -633,7 +633,7 @@ void day_17_part_2(char * filename, extra_args_t * extra_args, char * result)
 #ifdef DEBUG_DAY_17_HISTORY
             printf("Building history for piece %lld with jet_position %d\n", i, column.jet_pos);
 #endif
-            day_17_state_t * new_state;
+            day_17_state_t * new_state = (day_17_state_t *)malloc(sizeof(day_17_state_t));
             build_state(&column, new_state, i);
             day_17_state_t * matched_state = NULL;
             matched_state = find_matching_state(&history, new_state, column.jet_pos);

@@ -17,6 +17,6 @@ struct day_18_cubes
 typedef struct day_18_cubes day_18_cubes_t;
 
 void day_18_part_1(char * filename, extra_args_t * extra_args, char * result);
-//void day_18_part_2(char * filename, extra_args_t * extra_args, char * result);
+void day_18_part_2(char * filename, extra_args_t * extra_args, char * result);
 
 #endif

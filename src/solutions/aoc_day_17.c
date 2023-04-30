@@ -473,7 +473,7 @@ void day_17_part_1(char * filename, extra_args_t * extra_args, char * result)
     
     // read in the input file with no delimiters
     file_data_init(&fd);
-    file_data_read_file(&fd, filename, "", 9, '\0', '\0');
+    file_data_read_file(&fd, filename, "", 0, '\0', '\0');
     if (fd.num_lines == 0)
     {
         fprintf(stderr, "Error reading in data from %s\n", filename);
@@ -603,7 +603,7 @@ void day_17_part_2(char * filename, extra_args_t * extra_args, char * result)
     
     // read in the input file with no delimiters
     file_data_init(&fd);
-    file_data_read_file(&fd, filename, "", 9, '\0', '\0');
+    file_data_read_file(&fd, filename, "", 0, '\0', '\0');
     if (fd.num_lines == 0)
     {
         fprintf(stderr, "Error reading in data from %s\n", filename);

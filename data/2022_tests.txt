@@ -80,3 +80,4 @@
 17,2,day17_input.txt,1585673352422
 18,1,test_cases/day18_test1.txt,10
 18,1,test_cases/day18_test2.txt,64
+18,1,day18_input.txt,4320

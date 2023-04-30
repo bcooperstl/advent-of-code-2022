@@ -78,3 +78,8 @@
 17,1,day17_input.txt,3217
 17,2,test_cases/day17_test1.txt,1514285714288
 17,2,day17_input.txt,1585673352422
+18,1,test_cases/day18_test1.txt,10
+18,1,test_cases/day18_test2.txt,64
+18,1,day18_input.txt,4320
+18,2,test_cases/day18_test2.txt,58
+18,2,day18_input.txt,2456

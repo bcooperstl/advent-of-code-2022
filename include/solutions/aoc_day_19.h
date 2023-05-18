@@ -11,7 +11,7 @@ struct day_19_blueprint
 {
     int blueprint_id;
     int ore_robot_ore_cost;
-    int clay_robot_clay_cost;
+    int clay_robot_ore_cost;
     int obsidian_robot_ore_cost;
     int obsidian_robot_clay_cost;
     int geode_robot_ore_cost;
@@ -19,6 +19,16 @@ struct day_19_blueprint
 };
 
 typedef struct day_19_blueprint day_19_blueprint_t;
+
+struct day_19_blueprints
+{
+    day_19_blueprint_t blueprints[DAY_19_MAX_BLUEPRINTS];
+    int num_blueprints;
+};
+
+typedef struct day_19_blueprints day_19_blueprints_t;
+
+struct day_19_state;
 
 struct day_19_state
 {
@@ -31,6 +41,7 @@ struct day_19_state
     int num_clay;
     int num_obsidian;
     int num_geode;
+    struct day_19_state * next;
 };
 
 typedef struct day_19_state day_19_state_t;

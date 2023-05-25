@@ -88,3 +88,4 @@
 #optional extra parm is for number of blueprints to run
 19,2,test_cases/day19_test1.txt,3472,2
 19,2,day19_input.txt,21080
+20,1,test_cases/day20_test1.txt,3

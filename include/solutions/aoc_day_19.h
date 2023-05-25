@@ -58,6 +58,6 @@ struct day_19_state_page
 typedef struct day_19_state_page day_19_state_page_t;
 
 void day_19_part_1(char * filename, extra_args_t * extra_args, char * result);
-//void day_19_part_2(char * filename, extra_args_t * extra_args, char * result);
+void day_19_part_2(char * filename, extra_args_t * extra_args, char * result);
 
 #endif

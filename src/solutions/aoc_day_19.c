@@ -7,6 +7,8 @@
 #include "file_utils.h"
 
 #define PART_1_MINUTES 24
+#define PART_2_MINUTES 32
+#define PART_2_NUM_BLUEPRINTS 3
 #define MINUTES_TO_CATCH_UP_GEODE_ROBOTS 2
 
 static void init_state_page(day_19_state_page_t * page, int minutes)
@@ -350,7 +352,7 @@ static int work_blueprint_for_most_geodes(day_19_blueprint_t * blueprint, int nu
                     display_state(next_minute_robot);
 #endif
                 }
-                else if ((i < MINUTES_TO_CATCH_UP_GEODE_ROBOTS) || current_minute_state->num_geode_robots >= (blueprint->max_geode_robots_at_time[i-MINUTES_TO_CATCH_UP_GEODE_ROBOTS]))
+                else if ((i < MINUTES_TO_CATCH_UP_GEODE_ROBOTS) || (current_minute_state->num_geode_robots >= (blueprint->max_geode_robots_at_time[i-MINUTES_TO_CATCH_UP_GEODE_ROBOTS])))
                 {
                     // can always do no-op, but don't do it if we can create all four other robots
                     if ((can_build_ore_robot(current_minute_state, blueprint) == FALSE) ||
@@ -519,6 +521,37 @@ void day_19_part_1(char * filename, extra_args_t * extra_args, char * result)
     }
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", total_quality);
+    
+    return;
+}
+
+void day_19_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_19_blueprints_t blueprints;
+    
+    init_blueprints(&blueprints);
+    if (read_and_parse_input(filename, &blueprints) != TRUE)
+    {
+        return;
+    }
+    
+    int num_blueprints = PART_2_NUM_BLUEPRINTS;
+    
+    if (extra_args->num_extra_args == 1)
+    {
+        num_blueprints = strtol(extra_args->extra_args[0], NULL, 10);
+    }
+
+    printf("Running part 2 with %d blueprints\n", num_blueprints);
+
+    int product = 1;
+    for (int i=0; i<num_blueprints; i++)
+    {
+        printf("Working blueprint %d\n", blueprints.blueprints[i].blueprint_id);
+        product *= work_blueprint_for_most_geodes(&blueprints.blueprints[i], PART_2_MINUTES);
+    }
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", product);
     
     return;
 }

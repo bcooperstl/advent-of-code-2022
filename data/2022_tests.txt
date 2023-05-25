@@ -89,4 +89,6 @@
 19,2,test_cases/day19_test1.txt,3472,2
 19,2,day19_input.txt,21080
 20,1,test_cases/day20_test1.txt,3
+20,1,test_cases/day20_test2.txt,3
 20,1,day20_input.txt,3473
+20,2,test_cases/day20_test1.txt,1623178306

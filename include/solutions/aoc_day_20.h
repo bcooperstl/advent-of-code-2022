@@ -11,7 +11,7 @@ struct day_20_ring_node;
 
 struct day_20_ring_node
 {
-    short value;
+    long long value;
     struct day_20_ring_node * prev;
     struct day_20_ring_node * next;
 };
@@ -20,7 +20,7 @@ typedef struct day_20_ring_node day_20_ring_node_t;
 
 struct day_20_index_node
 {
-    short value;
+    long long value;
     day_20_ring_node_t ring_node;
 };
 
@@ -36,6 +36,6 @@ struct day_20_index
 typedef struct day_20_index day_20_index_t;
 
 void day_20_part_1(char * filename, extra_args_t * extra_args, char * result);
-//void day_20_part_2(char * filename, extra_args_t * extra_args, char * result);
+void day_20_part_2(char * filename, extra_args_t * extra_args, char * result);
 
 #endif

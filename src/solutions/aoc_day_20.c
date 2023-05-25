@@ -6,7 +6,9 @@
 #include "aoc_day_20.h"
 #include "file_utils.h"
 
-static void move_ring_node(day_20_ring_node_t * ring_node)
+#define PART_2_ENCRYPTION_KEY 811589153ll // long long 811589153
+
+static void move_ring_node(day_20_ring_node_t * ring_node, int ring_size)
 {
     day_20_ring_node_t * old_prev = ring_node->prev;
     day_20_ring_node_t * old_next = ring_node->next;
@@ -24,8 +26,10 @@ static void move_ring_node(day_20_ring_node_t * ring_node)
 
     if (ring_node->value > 0)
     {
+        // TODO: Fix calculation for number to move when wrapping around..here and in backward case
+        int num_to_move = (int)(ring_node->value % (long long)(ring_size - 1));
 #ifdef DEBUG_DAY_20
-        printf(" Moving node %d forward\n", ring_node->value);
+        printf(" Moving node %lld-->%d forward\n", ring_node->value, num_to_move);
         
 #endif
         day_20_ring_node_t * insert_after_node = ring_node;
@@ -33,7 +37,7 @@ static void move_ring_node(day_20_ring_node_t * ring_node)
         old_prev->next = old_next;
         old_next->prev = old_prev;
         
-        for (int i=0; i<ring_node->value; i++)
+        for (int i=0; i<num_to_move; i++)
         {
             insert_after_node = insert_after_node->next;
         }
@@ -49,8 +53,9 @@ static void move_ring_node(day_20_ring_node_t * ring_node)
     
     if (ring_node->value < 0)
     {
+        int num_to_move = (int)(ring_node->value % (long long)(ring_size - 1));
 #ifdef DEBUG_DAY_20
-        printf(" Moving node %d backward\n", ring_node->value);
+        printf(" Moving node %lld-->%d backward\n", ring_node->value, num_to_move);
         
 #endif
         day_20_ring_node_t * insert_before_node = ring_node;
@@ -58,7 +63,7 @@ static void move_ring_node(day_20_ring_node_t * ring_node)
         old_prev->next = old_next;
         old_next->prev = old_prev;
         
-        for (int i=0; i>ring_node->value; i--)
+        for (int i=0; i>num_to_move; i--)
         {
             insert_before_node = insert_before_node->prev;
         }
@@ -102,7 +107,7 @@ static void read_and_parse_input(char * filename, day_20_index_t * index)
     while (ld != NULL)
     {
         token_data_t * td = ld->head_token;
-        index->index_nodes[index->num_nodes].value = strtol(td->token, NULL, 10);
+        index->index_nodes[index->num_nodes].value = strtoll(td->token, NULL, 10);
         index->index_nodes[index->num_nodes].ring_node.value = index->index_nodes[index->num_nodes].value;
         if (index->index_nodes[index->num_nodes].value == 0)
         {
@@ -139,7 +144,7 @@ void day_20_part_1(char * filename, extra_args_t * extra_args, char * result)
     
     for (int i=0; i<index.num_nodes; i++)
     {
-        move_ring_node(&index.index_nodes[i].ring_node);
+        move_ring_node(&index.index_nodes[i].ring_node, index.num_nodes);
     }
     
     day_20_ring_node_t * coord = &index.index_nodes[index.zero_node_index].ring_node;
@@ -160,6 +165,53 @@ void day_20_part_1(char * filename, extra_args_t * extra_args, char * result)
     }
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", coordinate_sum);
+    
+    return;
+}
+
+
+void day_20_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    printf("-123456618 mod 13 is %d\n", -123456618%13);
+    
+    day_20_index_t index;
+    
+    read_and_parse_input(filename, &index);
+    
+    // apply encryption key
+    for (int i=0; i<index.num_nodes; i++)
+    {
+        index.index_nodes[i].value*=PART_2_ENCRYPTION_KEY;
+        index.index_nodes[i].ring_node.value=index.index_nodes[i].value;
+    }
+    long long coordinate_sum = 0;
+    
+    for (int i=0; i<10; i++)
+    {
+        for (int i=0; i<index.num_nodes; i++)
+        {
+            move_ring_node(&index.index_nodes[i].ring_node, index.num_nodes);
+        }
+    }
+    
+    day_20_ring_node_t * coord = &index.index_nodes[index.zero_node_index].ring_node;
+#ifdef DEBUG_DAY_20
+    printf("Coordinate from position %d is %lld\n", 0, coord->value);
+#endif
+    for (int i=0; i<3; i++)
+    {
+        for (int j=0; j<1000; j++)
+        {
+            coord = coord->next;
+        }
+        
+#ifdef DEBUG_DAY_20
+        printf("Coordinate from position %d is %lld\n", (i+1)*1000, coord->value);
+#endif
+        coordinate_sum+=coord->value;
+    }
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%lld", coordinate_sum);
     
     return;
 }

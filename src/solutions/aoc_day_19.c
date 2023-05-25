@@ -7,6 +7,7 @@
 #include "file_utils.h"
 
 #define PART_1_MINUTES 24
+#define MINUTES_TO_CATCH_UP_GEODE_ROBOTS 2
 
 static void init_state_page(day_19_state_page_t * page, int minutes)
 {
@@ -136,11 +137,15 @@ static void build_obsidian_robot(day_19_state_t * state, day_19_blueprint_t * bl
     return;
 }
 
-static void build_geode_robot(day_19_state_t * state, day_19_blueprint_t * blueprint)
+static void build_geode_robot(day_19_state_t * state, day_19_blueprint_t * blueprint, int time)
 {
     state->num_geode_robots++;
     state->num_ore-=blueprint->geode_robot_ore_cost;
     state->num_obsidian-=blueprint->geode_robot_obsidian_cost;
+    if (state->num_geode_robots > blueprint->max_geode_robots_at_time[time])
+    {
+        blueprint->max_geode_robots_at_time[time] = state->num_geode_robots;
+    }
     return;
 }
 
@@ -241,6 +246,11 @@ static int parse_blueprint_line(line_data_t * ld, day_19_blueprint_t * blueprint
     printf("Obsidian robot costs %d ore and %d clay\n", blueprint->obsidian_robot_ore_cost, blueprint->obsidian_robot_clay_cost);
     printf("Geode reobot costs %d ore and %d obsidian\n", blueprint->geode_robot_ore_cost, blueprint->geode_robot_obsidian_cost);
 #endif
+
+    for (int i=0; i<DAY_19_MAX_NUM_MINUTES; i++)
+    {
+        blueprint->max_geode_robots_at_time[i] = 0;
+    }
     return TRUE;
 }
 
@@ -304,7 +314,9 @@ static int work_blueprint_for_most_geodes(day_19_blueprint_t * blueprint, int nu
     display_state(&current_minute_head_page->states[0]);
 #endif
 
-    for (int i=1; i<=num_minutes-1; i++)
+    int current_minute_page;
+    // all but last 2 minutes - do everything
+    for (int i=1; i<=num_minutes-2; i++)
     {
         printf("== Minute %d ==\n", i);
         next_minute_head_page = (day_19_state_page_t *) malloc (sizeof(day_19_state_page_t));
@@ -312,7 +324,7 @@ static int work_blueprint_for_most_geodes(day_19_blueprint_t * blueprint, int nu
         
         current_minute_current_page = current_minute_head_page;
         next_minute_current_page = next_minute_head_page;
-        int current_minute_page = 0;
+        current_minute_page = 0;
         while (current_minute_current_page != NULL)
         {
 #ifdef DEBUG_DAY_19
@@ -332,13 +344,13 @@ static int work_blueprint_for_most_geodes(day_19_blueprint_t * blueprint, int nu
                     day_19_state_t * next_minute_robot = get_next_available_state(&next_minute_current_page);
                     clone_state(next_minute_robot, current_minute_state);
                     accumulate_resources(next_minute_robot);
-                    build_geode_robot(next_minute_robot, blueprint);
+                    build_geode_robot(next_minute_robot, blueprint, i);
 #ifdef DEBUG_DAY_19
                     printf("  created geode robot state: ");
                     display_state(next_minute_robot);
 #endif
                 }
-                else
+                else if ((i < MINUTES_TO_CATCH_UP_GEODE_ROBOTS) || current_minute_state->num_geode_robots >= (blueprint->max_geode_robots_at_time[i-MINUTES_TO_CATCH_UP_GEODE_ROBOTS]))
                 {
                     // can always do no-op, but don't do it if we can create all four other robots
                     if ((can_build_ore_robot(current_minute_state, blueprint) == FALSE) ||
@@ -403,13 +415,67 @@ static int work_blueprint_for_most_geodes(day_19_blueprint_t * blueprint, int nu
         }
         free_state_pages(current_minute_head_page);
         current_minute_head_page = next_minute_head_page;
+        printf("The maximum number of geode robots at minute %d is %d\n", i, blueprint->max_geode_robots_at_time[i]);
     }
     
+    // Second to last minute - only options that affect output are adding geode robot or mining resources for the last minute
+    printf("== Minute %d ==\n", num_minutes - 1);
+        
+    next_minute_head_page = (day_19_state_page_t *) malloc (sizeof(day_19_state_page_t));
+    init_state_page(next_minute_head_page, current_minute_head_page->minutes_elapsed+1);
+        
+    current_minute_current_page = current_minute_head_page;
+    next_minute_current_page = next_minute_head_page;
+    current_minute_page = 0;
+    while (current_minute_current_page != NULL)
+    {
+#ifdef DEBUG_DAY_19
+        printf(" Processing current minute page %d\n", current_minute_page);
+#endif
+        for (int state = 0; state < current_minute_current_page->num_used_states; state++)
+        {
+            day_19_state_t * current_minute_state = &current_minute_current_page->states[state];
+#ifdef DEBUG_DAY_19
+            printf("  working state %d: ", state);
+            display_state(current_minute_state);
+#endif
+
+            // check for creating geode robot
+            if (can_build_geode_robot(current_minute_state, blueprint) == TRUE)
+            {
+                day_19_state_t * next_minute_robot = get_next_available_state(&next_minute_current_page);
+                clone_state(next_minute_robot, current_minute_state);
+                accumulate_resources(next_minute_robot);
+                build_geode_robot(next_minute_robot, blueprint, num_minutes-1);
+#ifdef DEBUG_DAY_19
+                printf("  created geode robot state: ");
+                display_state(next_minute_robot);
+#endif
+            }
+
+            day_19_state_t * next_minute_no_op = get_next_available_state(&next_minute_current_page);
+            clone_state(next_minute_no_op, current_minute_state);
+            accumulate_resources(next_minute_no_op);
+#ifdef DEBUG_DAY_19
+            printf("  created no-op state: ");
+            display_state(next_minute_no_op);
+#endif
+                    
+        }
+        current_minute_page++;
+        current_minute_current_page = current_minute_current_page->next;
+    }
+    free_state_pages(current_minute_head_page);
+    current_minute_head_page = next_minute_head_page;
+
+    printf("The maximum number of geode robots at minute %d is %d\n", num_minutes-1, blueprint->max_geode_robots_at_time[num_minutes-1]);
+
+
     // All we have to do is mine resources for the last minute
     printf("== Minute %d ==\n", num_minutes);
         
     current_minute_current_page = current_minute_head_page;
-    int current_minute_page = 0;
+    current_minute_page = 0;
     while (current_minute_current_page != NULL)
     {
 #ifdef DEBUG_DAY_19

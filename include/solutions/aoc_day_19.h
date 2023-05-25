@@ -7,6 +7,7 @@
 
 #define DAY_19_MAX_BLUEPRINTS 30
 #define DAY_19_STATES_PER_PAGE 65536
+#define DAY_19_MAX_NUM_MINUTES 36
 
 struct day_19_blueprint
 {
@@ -17,6 +18,7 @@ struct day_19_blueprint
     int obsidian_robot_clay_cost;
     int geode_robot_ore_cost;
     int geode_robot_obsidian_cost;
+    int max_geode_robots_at_time[DAY_19_MAX_NUM_MINUTES];
 };
 
 typedef struct day_19_blueprint day_19_blueprint_t;
@@ -31,14 +33,14 @@ typedef struct day_19_blueprints day_19_blueprints_t;
 
 struct day_19_state
 {
-    int num_ore_robots;
-    int num_clay_robots;
-    int num_obsidian_robots;
-    int num_geode_robots;
-    int num_ore;
-    int num_clay;
-    int num_obsidian;
-    int num_geode;
+    unsigned char num_ore_robots;
+    unsigned char num_clay_robots;
+    unsigned char num_obsidian_robots;
+    unsigned char num_geode_robots;
+    unsigned char num_ore;
+    unsigned char num_clay;
+    unsigned char num_obsidian;
+    unsigned char num_geode;
 };
 
 typedef struct day_19_state day_19_state_t;

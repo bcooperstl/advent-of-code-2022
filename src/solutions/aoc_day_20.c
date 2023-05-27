@@ -173,8 +173,6 @@ void day_20_part_1(char * filename, extra_args_t * extra_args, char * result)
 
 void day_20_part_2(char * filename, extra_args_t * extra_args, char * result)
 {
-    printf("-123456618 mod 13 is %d\n", -123456618%13);
-    
     day_20_index_t index;
     
     read_and_parse_input(filename, &index);

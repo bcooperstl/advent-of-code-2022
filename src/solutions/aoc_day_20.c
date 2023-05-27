@@ -17,20 +17,21 @@ static void move_ring_node(day_20_ring_node_t * ring_node, int ring_size)
     printf("Working node %d %d %d**%d**%d %d %d\n", ring_node->prev->prev->value, ring_node->prev->value, ring_node->prev->next->value, ring_node->value, ring_node->next->prev->value, ring_node->next->value, ring_node->next->next->value);
 #endif
 
-    if (ring_node->value == 0)
+    int num_to_move = (int)(ring_node->value % (long long)(ring_size - 1));
+    
+    if (num_to_move == 0)
     {
 #ifdef DEBUG_DAY_20
         printf(" Nothing to move for ring node with value 0\n");
 #endif
     }
 
-    if (ring_node->value > 0)
+    if (num_to_move > 0)
     {
         // TODO: Fix calculation for number to move when wrapping around..here and in backward case
         int num_to_move = (int)(ring_node->value % (long long)(ring_size - 1));
 #ifdef DEBUG_DAY_20
         printf(" Moving node %lld-->%d forward\n", ring_node->value, num_to_move);
-        
 #endif
         day_20_ring_node_t * insert_after_node = ring_node;
         // pull it out of the list
@@ -51,7 +52,7 @@ static void move_ring_node(day_20_ring_node_t * ring_node, int ring_size)
         insert_after_node->next = ring_node;
     }
     
-    if (ring_node->value < 0)
+    if (num_to_move < 0)
     {
         int num_to_move = (int)(ring_node->value % (long long)(ring_size - 1));
 #ifdef DEBUG_DAY_20

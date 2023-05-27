@@ -3,7 +3,7 @@ DEBUG=
 #DEBUG+= -DDEBUG_RUNNER
 #Template for other debug flags to be added later
 #DEBUG+=  -DDEBUG_DAY_16 -DDEBUG_DAY_16_PARSE -DDEBUG_DAY_16_BFS -DDEBUG_DAY_16_DISTANCES
-DEBUG+=  -DDEBUG_DAY_20
+#DEBUG+=  -DDEBUG_DAY_20
 
 #If adding another include directory, be sure to add it here
 CFLAGS=-g ${DEBUG} -Iinclude/common -Iinclude/runner -Iinclude/screen -Iinclude/solutions

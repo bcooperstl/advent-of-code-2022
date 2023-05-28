@@ -182,7 +182,7 @@ void day_21_part_1(char * filename, extra_args_t * extra_args, char * result)
         }
     }
     
-    snprintf(result, MAX_RESULT_LENGTH+1, "%d", get_value(&monkeys, root_index));
+    snprintf(result, MAX_RESULT_LENGTH+1, "%lld", get_value(&monkeys, root_index));
     
     return;
 }

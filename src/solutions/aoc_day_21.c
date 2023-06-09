@@ -7,6 +7,8 @@
 #include "file_utils.h"
 
 #define PART_1_TARGET_MONKEY "root"
+#define PART_2_EQUAL_MONKEY "root"
+#define PART_2_YELL_MONKEY "humn"
 
 static void read_and_parse_input(char * filename, day_21_monkeys_t * monkeys)
 {
@@ -118,6 +120,49 @@ static void fixup_operation_pointers(day_21_monkeys_t * monkeys)
     }        
 }
 
+static void find_yell_dependent(day_21_monkeys_t * monkeys, int yell_index)
+{
+    for (int i=0; i<monkeys->num_monkeys; i++)
+    {
+        monkeys->monkeys[i].is_yell_dependant = FALSE;
+    }
+    
+    monkeys->monkeys[yell_index].is_yell_dependant = TRUE;
+#ifdef DEBUG_DAY_21
+    printf("Setting Yell Dependant Monkeys\n Setting Yell Monkey at %d (%s) as yell dependent\n", yell_index, monkeys->monkeys[yell_index].own_name);
+#endif
+    int did_something = TRUE;
+    while (did_something == TRUE)
+    {
+        did_something = FALSE;
+        for (int i=0; i<monkeys->num_monkeys; i++)
+        {
+            if (monkeys->monkeys[i].is_yell_dependant == TRUE)
+            {
+                for (int j=0; j<monkeys->num_monkeys; j++)
+                {
+                    if (monkeys->monkeys[j].type == DAY_21_MONKEY_IS_OPERATION && monkeys->monkeys[j].is_yell_dependant == FALSE)
+                    {
+                        for (int k=0; k<2; k++)
+                        {
+                            int dest_index = monkeys->monkeys[j].operand_indices[k];
+                            if (i == dest_index)
+                            {
+                                monkeys->monkeys[j].is_yell_dependant = TRUE;
+#ifdef DEBUG_DAY_21
+                                printf(" Setting Monkey at %d (%s) as yell dependent because operand %d is yell dependant monkey %d (%s)\n", j, monkeys->monkeys[j].own_name, k, i, monkeys->monkeys[i].own_name);
+#endif
+                                did_something = TRUE;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return;
+}
+
 static long long get_value(day_21_monkeys_t * monkeys, int monkey_index)
 {
     if (monkeys->monkeys[monkey_index].is_evaluated == TRUE)
@@ -143,11 +188,15 @@ static long long get_value(day_21_monkeys_t * monkeys, int monkey_index)
             case '/':
                 monkeys->monkeys[monkey_index].value = left / right;
                 break;
+            case '=':
+                monkeys->monkeys[monkey_index].value = (left == right ? 1 : 0);
+                break;
             default:
                 fprintf(stderr, "Invalid operation %c for monkey %d (%s)\n", monkeys->monkeys[monkey_index].operation, monkey_index, monkeys->monkeys[monkey_index].own_name);
                 monkeys->monkeys[monkey_index].value = 0;
                 break;
         }
+        monkeys->monkeys[monkey_index].is_evaluated = TRUE;
 #ifdef DEBUG_DAY_21
         printf("Monkey %d (%s) has calculated value of %s (%lld) %c %s (%lld) = %lld\n", monkey_index, monkeys->monkeys[monkey_index].own_name,
                                                                               monkeys->monkeys[monkey_index].operand_names[0], left, 
@@ -163,6 +212,216 @@ static long long get_value(day_21_monkeys_t * monkeys, int monkey_index)
     return monkeys->monkeys[monkey_index].value;    
 }
 
+static void set_non_yell_dependant_values(day_21_monkeys_t * monkeys, int equal_index)
+{
+    // start with the left and right sides of equal element
+#ifdef DEBUG_DAY_21
+    printf("Setting non yell-dependant values\n");
+#endif
+    
+    int idx = monkeys->monkeys[equal_index].operand_indices[0];
+    if (monkeys->monkeys[idx].is_yell_dependant == TRUE)
+    {
+#ifdef DEBUG_DAY_21
+    printf(" Operand 0 of equal is %d (%s) and is yell-dependant. Skipping this item\n", idx, monkeys->monkeys[idx].own_name);
+#endif
+    }
+    else
+    {
+#ifdef DEBUG_DAY_21
+        printf(" Operand 0 of equal is %d (%s) and is not yell-dependant. Setting from this element\n", idx, monkeys->monkeys[idx].own_name);
+#endif
+        get_value(monkeys, idx);
+    }
+    
+    idx = monkeys->monkeys[equal_index].operand_indices[1];
+    if (monkeys->monkeys[idx].is_yell_dependant == TRUE)
+    {
+#ifdef DEBUG_DAY_21
+    printf(" Operand 1 of equal is %d (%s) and is yell-dependant. Skipping this item\n", idx, monkeys->monkeys[idx].own_name);
+#endif
+    }
+    else
+    {
+#ifdef DEBUG_DAY_21
+        printf(" Operand 1 of equal is %d (%s) and is not yell-dependant. Setting from this element\n", idx, monkeys->monkeys[idx].own_name);
+#endif
+        get_value(monkeys, idx);
+    }
+    
+    // pick up any stragglers
+    for (idx=0; idx<monkeys->num_monkeys; idx++)
+    {
+        if (monkeys->monkeys[idx].is_yell_dependant == FALSE && monkeys->monkeys[idx].is_evaluated == FALSE)
+        {
+#ifdef DEBUG_DAY_21
+            printf(" Straggler %d (%s) and is not yell-dependant. Setting from this element\n", idx, monkeys->monkeys[idx].own_name);
+#endif
+            get_value(monkeys, idx);
+        }
+    }
+    return;
+}
+
+static void set_and_recurse(day_21_monkeys_t * monkeys, int set_index, long long value)
+{
+    // terminal case - literal value
+    if (monkeys->monkeys[set_index].type == DAY_21_MONKEY_IS_VALUE)
+    {
+        monkeys->monkeys[set_index].value = value;
+#ifdef DEBUG_DAY_21
+        printf("Setting value monkey %d (%s) to %lld\n", set_index, monkeys->monkeys[set_index].own_name, value);
+#endif
+    }
+    else // operation
+    {
+        monkeys->monkeys[set_index].value = value;
+#ifdef DEBUG_DAY_21
+        printf("Setting operation monkey %d (%s) to %lld\n", set_index, monkeys->monkeys[set_index].own_name, value);
+#endif
+        int idx[2];
+        idx[0] = monkeys->monkeys[set_index].operand_indices[0];
+        idx[1] = monkeys->monkeys[set_index].operand_indices[1];
+        
+        // equality = operation
+        if (monkeys->monkeys[set_index].operation == '=')
+        {
+            // equal operation - need to set the yell-dependant monkey to have the value of the non-yell-dependant monkey
+            if (monkeys->monkeys[idx[0]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is =; Monkey %d (%s) is yell-dependant. Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld\n", 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, monkeys->monkeys[idx[1]].value,
+                         idx[0], monkeys->monkeys[idx[0]].own_name, monkeys->monkeys[idx[1]].value);
+#endif
+                set_and_recurse(monkeys, idx[0], monkeys->monkeys[idx[1]].value);
+            }
+            else if (monkeys->monkeys[idx[1]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is =; Monkey %d (%s) is yell-dependant. Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld\n", 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, monkeys->monkeys[idx[0]].value,
+                         idx[1], monkeys->monkeys[idx[1]].own_name, monkeys->monkeys[idx[0]].value);
+#endif
+                set_and_recurse(monkeys, idx[1], monkeys->monkeys[idx[0]].value);
+            }
+        }
+
+        // addition + opereation
+        if (monkeys->monkeys[set_index].operation == '+')
+        {
+            // addition operation - need to set the yell-dependant monkey to have the value of the set monkey minus the value of the non-yell-dependant monkey
+            if (monkeys->monkeys[idx[0]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is +; Monkey %d (%s) is yell-dependant. Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld - %lld = %lld\n", 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, monkeys->monkeys[idx[1]].value,
+                         idx[0], monkeys->monkeys[idx[0]].own_name, value, monkeys->monkeys[idx[1]].value, value - monkeys->monkeys[idx[1]].value);
+#endif
+                set_and_recurse(monkeys, idx[0], value - monkeys->monkeys[idx[1]].value);
+            }
+            else if (monkeys->monkeys[idx[1]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is +; Monkey %d (%s) is yell-dependant. Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld - %lld = %lld\n", 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, monkeys->monkeys[idx[0]].value,
+                         idx[1], monkeys->monkeys[idx[1]].own_name, value, monkeys->monkeys[idx[0]].value, value - monkeys->monkeys[idx[0]].value);
+#endif
+                set_and_recurse(monkeys, idx[1], value - monkeys->monkeys[idx[0]].value);
+            }
+        }
+
+        // subtraction - opereation
+        if (monkeys->monkeys[set_index].operation == '-')
+        {
+            // subtraction operation
+            // value = first - second
+            // if yell-dependant monkey is first operand, need to set its value to set_value + second monkey's value
+            // if the yell-dependant monkey is second, need to set its value to first - set_value
+            if (monkeys->monkeys[idx[0]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is -; First Monkey %d (%s) is yell-dependant. Second Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld + %lld = %lld\n", 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, monkeys->monkeys[idx[1]].value,
+                         idx[0], monkeys->monkeys[idx[0]].own_name, value, monkeys->monkeys[idx[1]].value, value + monkeys->monkeys[idx[1]].value);
+#endif
+                set_and_recurse(monkeys, idx[0], value + monkeys->monkeys[idx[1]].value);
+            }
+            else if (monkeys->monkeys[idx[1]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is -; Second Monkey %d (%s) is yell-dependant. First Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld - %lld = %lld\n", 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, monkeys->monkeys[idx[0]].value,
+                         idx[1], monkeys->monkeys[idx[1]].own_name, monkeys->monkeys[idx[0]].value, value, monkeys->monkeys[idx[0]].value - value);
+#endif
+                set_and_recurse(monkeys, idx[1], monkeys->monkeys[idx[0]].value - value);
+            }
+        }
+
+        // multiplication * opereation
+        if (monkeys->monkeys[set_index].operation == '*')
+        {
+            // multiplication operation - need to set the yell-dependant monkey to have the value of the set monkey divided by the value of the non-yell-dependant monkey
+            if (monkeys->monkeys[idx[0]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is *; Monkey %d (%s) is yell-dependant. Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld / %lld = %lld\n", 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, monkeys->monkeys[idx[1]].value,
+                         idx[0], monkeys->monkeys[idx[0]].own_name, value, monkeys->monkeys[idx[1]].value, value / monkeys->monkeys[idx[1]].value);
+#endif
+                set_and_recurse(monkeys, idx[0], value / monkeys->monkeys[idx[1]].value);
+            }
+            else if (monkeys->monkeys[idx[1]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is *; Monkey %d (%s) is yell-dependant. Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld / %lld = %lld\n", 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, monkeys->monkeys[idx[0]].value,
+                         idx[1], monkeys->monkeys[idx[1]].own_name, value, monkeys->monkeys[idx[0]].value, value / monkeys->monkeys[idx[0]].value);
+#endif
+                set_and_recurse(monkeys, idx[1], value / monkeys->monkeys[idx[0]].value);
+            }
+        }
+
+        // division / opereation
+        if (monkeys->monkeys[set_index].operation == '/')
+        {
+            // division operation
+            // value = first / second
+            // first = value * second
+            // second = first / value
+            // if yell-dependant monkey is first operand, need to set its value to set_value * second monkey's value
+            // if the yell-dependant monkey is second, need to set its value to first / set_value
+            if (monkeys->monkeys[idx[0]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is /; First Monkey %d (%s) is yell-dependant. Second Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld * %lld = %lld\n", 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, monkeys->monkeys[idx[1]].value,
+                         idx[0], monkeys->monkeys[idx[0]].own_name, value, monkeys->monkeys[idx[1]].value, value * monkeys->monkeys[idx[1]].value);
+#endif
+                set_and_recurse(monkeys, idx[0], value * monkeys->monkeys[idx[1]].value);
+            }
+            else if (monkeys->monkeys[idx[1]].is_yell_dependant == TRUE)
+            {
+#ifdef DEBUG_DAY_21
+                printf(" Operation is /; Second Monkey %d (%s) is yell-dependant. First Monkey %d (%s) is non-yell-dependant with value %lld. Setting monkey %d (%s) to %lld / %lld = %lld\n", 
+                         idx[1], monkeys->monkeys[idx[1]].own_name, 
+                         idx[0], monkeys->monkeys[idx[0]].own_name, monkeys->monkeys[idx[0]].value,
+                         idx[1], monkeys->monkeys[idx[1]].own_name, monkeys->monkeys[idx[0]].value, value, monkeys->monkeys[idx[0]].value / value);
+#endif
+                set_and_recurse(monkeys, idx[1], monkeys->monkeys[idx[0]].value / value);
+            }
+        }
+    }
+}
 
 void day_21_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
@@ -183,6 +442,46 @@ void day_21_part_1(char * filename, extra_args_t * extra_args, char * result)
     }
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%lld", get_value(&monkeys, root_index));
+    
+    return;
+}
+
+void day_21_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_21_monkeys_t monkeys;
+    
+    read_and_parse_input(filename, &monkeys);
+    
+    fixup_operation_pointers(&monkeys);
+    
+    int equal_index = 0;
+    int yell_index = 0;
+    for (int i=0; i<monkeys.num_monkeys; i++)
+    {
+        if (strncmp(monkeys.monkeys[i].own_name, PART_2_EQUAL_MONKEY, DAY_21_MONKEY_NAME_LENGTH) == 0)
+        {
+            equal_index = i;
+        }
+        if (strncmp(monkeys.monkeys[i].own_name, PART_2_YELL_MONKEY, DAY_21_MONKEY_NAME_LENGTH) == 0)
+        {
+            yell_index = i;
+        }
+    }
+    
+#ifdef DEBUG_DAY_21
+        printf("Equal Monkey is index %d and Yell Monkey is index %d\n", equal_index, yell_index);
+#endif
+    
+    // assign equal operation to equal monkey
+    monkeys.monkeys[equal_index].operation = '=';
+    
+    find_yell_dependent(&monkeys, yell_index);
+    
+    set_non_yell_dependant_values(&monkeys, equal_index);
+    
+    set_and_recurse(&monkeys, equal_index, 1);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%lld", monkeys.monkeys[yell_index].value);
     
     return;
 }

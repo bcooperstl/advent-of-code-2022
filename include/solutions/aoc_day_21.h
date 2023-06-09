@@ -22,6 +22,7 @@ struct day_21_monkey
     char operation;
     char operand_names[2][DAY_21_MONKEY_NAME_LENGTH+1];
     int operand_indices[2];
+    int is_yell_dependant;
 };
 
 typedef struct day_21_monkey day_21_monkey_t;
@@ -35,6 +36,6 @@ struct day_21_monkeys
 typedef struct day_21_monkeys day_21_monkeys_t;
 
 void day_21_part_1(char * filename, extra_args_t * extra_args, char * result);
-//void day_21_part_2(char * filename, extra_args_t * extra_args, char * result);
+void day_21_part_2(char * filename, extra_args_t * extra_args, char * result);
 
 #endif

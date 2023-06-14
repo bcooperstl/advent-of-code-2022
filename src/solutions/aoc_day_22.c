@@ -425,3 +425,158 @@ void day_22_part_1(char * filename, extra_args_t * extra_args, char * result)
     
     return;
 }
+
+static void init_cube(day_22_cube_t * cube)
+{
+    for (int i=0; i<4; i++)
+    {
+        cube->left_right_rotation_faces[i].loaded = FALSE;
+        cube->up_down_rotation_faces[i].loaded = FALSE;
+        cube->left_right_rotation_faces[i].edge_length = cube->edge_length;
+        cube->up_down_rotation_faces[i].edge_length = cube->edge_length;
+    }
+    return;
+}
+
+static void copy_face(day_22_face_t * to, day_22_face_t * from)
+{
+    memcpy(to, from, sizeof(day_22_face_t));
+    return;
+}
+
+static void display_face(day_22_face_t * face)
+{
+    for (int y=0; y<face->edge_length; y++)
+    {
+        printf("|");
+        for (int x=0; x<face->edge_length; x++)
+        {
+            printf("%c", face->cells[y][x].value);
+        }
+        printf("|\n");
+    }
+    return;
+}
+
+static void rotate_face_clockwise(day_22_face_t * face)
+{
+    if (face->loaded == FALSE)
+    {
+        return;
+    }
+#ifdef DEBUG_DAY_22
+    printf("Before rotating clockwise:\n");
+    display_face(face);
+#endif
+    day_22_face_t temp;
+    copy_face(&temp, face);
+    // source[y][x] --> dest[x][(edge_length-1)-y]
+    for (int src_y=0; src_y<face->edge_length; src_y++)
+    {
+        for (int src_x=0; src_x<face->edge_length; src_x++)
+        {
+            memcpy(&face->cells[src_x][(face->edge_length - 1) - src_y], &temp.cells[src_y][src_x], sizeof(day_22_cell_t));
+        }
+    }
+#ifdef DEBUG_DAY_22
+    printf("After rotating clockwise:\n");
+    display_face(face);
+#endif
+}    
+
+static void rotate_face_counter_clockwise(day_22_face_t * face)
+{
+    if (face->loaded == FALSE)
+    {
+        return;
+    }
+#ifdef DEBUG_DAY_22
+    printf("Before rotating counter-clockwise:\n");
+    display_face(face);
+#endif
+    day_22_face_t temp;
+    copy_face(&temp, face);
+    // source[y][x] --> dest[(edge_length-1)-x][y]
+    for (int src_y=0; src_y<face->edge_length; src_y++)
+    {
+        for (int src_x=0; src_x<face->edge_length; src_x++)
+        {
+            memcpy(&face->cells[(face->edge_length - 1) - src_x][src_y], &temp.cells[src_y][src_x], sizeof(day_22_cell_t));
+        }
+    }
+#ifdef DEBUG_DAY_22
+    printf("After rotating counter-clockwise:\n");
+    display_face(face);
+#endif
+}    
+
+static void load_face_from_board(day_22_face_t * face, day_22_board_t * board, int start_y, int start_x)
+{
+    if (face->loaded == TRUE)
+    {
+        fprintf(stderr, "***FACE IS ALREADY LOADED...FIX YOUR STUFF***\n");
+        return;
+    }
+    int edge_length = face->edge_length;
+    for (int dest_y=0; dest_y<edge_length; dest_y++)
+    {
+        for (int dest_x=0; dest_x<edge_length; dest_x++)
+        {
+            face->cells[dest_y][dest_x].value = board->layout[start_y+dest_y][start_x+dest_x];
+            face->cells[dest_y][dest_x].input_row = start_y+dest_y;
+            face->cells[dest_y][dest_x].input_col = start_x+dest_x;
+        }
+    }
+    
+    face->loaded = TRUE;
+}
+
+
+static void load_cube_from_board(day_22_cube_t * cube, day_22_board_t * board)
+{
+    init_cube(cube);
+    int start_x = 1;
+    int start_y = 1;
+    while (board->layout[start_y][start_x] == DAY_22_VOID)
+    {
+        start_x += cube->edge_length;
+    }
+#ifdef DEBUG_DAY_22
+    printf("Loading front face from row=%d col=%d\n", start_y, start_x);
+#endif
+    load_face_from_board(&cube->left_right_rotation_faces[0], board, start_y, start_x);
+    copy_face(&cube->up_down_rotation_faces[0], &cube->left_right_rotation_faces[0]);
+
+#ifdef DEBUG_DAY_22
+    printf("Left/Right front face:\n");
+    display_face(&cube->left_right_rotation_faces[0]);
+    printf("Up/Down front face:\n");
+    display_face(&cube->up_down_rotation_faces[0]);
+#endif
+    rotate_face_clockwise(&cube->left_right_rotation_faces[0]);
+    rotate_face_counter_clockwise(&cube->left_right_rotation_faces[0]);
+    
+}
+
+void day_22_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_22_game_t game;
+    day_22_cube_t cube;
+    
+    read_and_parse_input(filename, &game);
+    
+    cube.edge_length = PART_2_MAX_EDGE_LENGTH;
+    
+    if (extra_args->num_extra_args == 1)
+    {
+        cube.edge_length = strtol(extra_args->extra_args[0], NULL, 10);
+    }
+    
+    printf("Performing part 2 with edge length %d\n", cube.edge_length);
+    
+    load_cube_from_board(&cube, &game.layout_board);
+
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", calculate_score(&game));
+    
+    return;
+}

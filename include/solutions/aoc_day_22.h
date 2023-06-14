@@ -29,6 +29,8 @@
 
 #define DAY_22_MAX_DIMENSION 200
 
+#define PART_2_MAX_EDGE_LENGTH 50
+
 struct day_22_instruction
 {
     int type;
@@ -72,7 +74,36 @@ struct day_22_game
 
 typedef struct day_22_game day_22_game_t;
 
+struct day_22_cell
+{
+    int input_row;
+    int input_col;
+    char value;
+};
+
+typedef struct day_22_cell day_22_cell_t;
+
+struct day_22_face
+{
+    int loaded;
+    int edge_length;
+    day_22_cell_t cells[PART_2_MAX_EDGE_LENGTH][PART_2_MAX_EDGE_LENGTH];
+};
+
+typedef struct day_22_face day_22_face_t;
+
+// a normal cube has 6 faces. mine has 8 to handle the back face for left/right and up/down rotations
+
+struct day_22_cube
+{
+    int edge_length;
+    day_22_face_t left_right_rotation_faces[4];
+    day_22_face_t up_down_rotation_faces[4];
+};
+
+typedef struct day_22_cube day_22_cube_t;
+
 void day_22_part_1(char * filename, extra_args_t * extra_args, char * result);
-//void day_22_part_2(char * filename, extra_args_t * extra_args, char * result);
+void day_22_part_2(char * filename, extra_args_t * extra_args, char * result);
 
 #endif

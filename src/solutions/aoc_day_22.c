@@ -405,8 +405,8 @@ static void play_game(day_22_game_t * game)
             perform_move_instruction(game, game->instructions.instructions[game->instructions_performed].num_to_go);
         }
 #ifdef DEBUG_DAY_22
-        printf("Resulting board is:\n");
-        display_board(&game->tracking_board);
+//        printf("Resulting board is:\n");
+//        display_board(&game->tracking_board);
 #endif
         game->instructions_performed++;
     }

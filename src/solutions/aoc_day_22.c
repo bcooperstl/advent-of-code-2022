@@ -685,6 +685,16 @@ static void load_cube_from_board(day_22_cube_t * cube, day_22_board_t * board)
     init_cube(cube);
     int start_x = 1;
     int start_y = 1;
+    
+    int num_loaded = 0;
+    int loaded_x[6];
+    int loaded_y[6];
+    char path_to_load[6][20];
+    for (int i=0; i<6; i++)
+    {
+        path_to_load[i][0] = '\0';
+    }
+    
     while (board->layout[start_y][start_x] == DAY_22_VOID)
     {
         start_x += cube->edge_length;
@@ -692,34 +702,259 @@ static void load_cube_from_board(day_22_cube_t * cube, day_22_board_t * board)
 #ifdef DEBUG_DAY_22
     printf("Loading front face from row=%d col=%d\n", start_y, start_x);
 #endif
-    load_face_from_board(&cube->left_right_rotation_faces[0], board, start_y, start_x);
-    copy_face(&cube->up_down_rotation_faces[0], &cube->left_right_rotation_faces[0]);
-
+    load_face_from_board(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT], board, start_y, start_x);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT], &cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+    num_loaded = 1;
+    loaded_x[0] = start_x;
+    loaded_y[0] = start_y;
+    
+    while (num_loaded != 6)
+    {
 #ifdef DEBUG_DAY_22
-    printf("Left/Right front face:\n");
-    display_face(&cube->left_right_rotation_faces[0]);
-    printf("Up/Down front face:\n");
-    display_face(&cube->up_down_rotation_faces[0]);
+        printf("%d faces loaded...trying for more\n", num_loaded);
 #endif
-    display_cube(cube);
-    
-    turn_cube_left(cube);
-    display_cube(cube);
-    
-    turn_cube_right(cube);
-    display_cube(cube);
-    
-    turn_cube_up(cube);
-    display_cube(cube);
-    
-    turn_cube_down(cube);
-    display_cube(cube);
-    
-    turn_cube_left(cube);
-    turn_cube_left(cube);
-    turn_cube_up(cube);
-    turn_cube_up(cube);
-    display_cube(cube);
+        // check left, right, bottom of each loaded point
+        for (int i=0; i<num_loaded; i++)
+        {
+            // check left
+            int test_y = loaded_y[i];
+            int test_x = loaded_x[i]-cube->edge_length;
+            if (test_x >= 1)
+            {
+#ifdef DEBUG_DAY_22
+                printf(" Checking left of row=%d col=%d at row=%d col=%d\n", loaded_y[i], loaded_x[i], test_y, test_x);
+#endif
+                if (board->layout[test_y][test_x] != DAY_22_VOID)
+                {
+#ifdef DEBUG_DAY_22
+                    printf("  Potential loading point found\n");
+#endif
+                    int loaded = FALSE;
+                    for (int j=0; j<num_loaded; j++)
+                    {
+                        if ((loaded_x[j] == test_x) && (loaded_y[j] == test_y))
+                        {
+                            loaded = TRUE;
+                            break;
+                        }
+                    }
+                    if (loaded == TRUE)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Already loaded; skipping\n");
+#endif
+                    }
+                    else
+                    {
+                        snprintf(path_to_load[num_loaded], 20, "%sL", path_to_load[i]);
+#ifdef DEBUG_DAY_22
+                        printf("  Loading from path %s\n", path_to_load[num_loaded]);
+#endif
+                        int path_length = strlen(path_to_load[num_loaded]);
+                        for (int j=0; j<path_length; j++)
+                        {
+                            if (path_to_load[num_loaded][j] == 'L')
+                            {
+                                turn_cube_right(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'R')
+                            {
+                                turn_cube_left(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'D')
+                            {
+                                turn_cube_up(cube);
+                            }
+                        }
+                        load_face_from_board(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT], board, test_y, test_x);
+                        copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT], &cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+                        for (int j=path_length-1; j>=0; j--)
+                        {
+                            if (path_to_load[num_loaded][j] == 'L')
+                            {
+                                turn_cube_left(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'R')
+                            {
+                                turn_cube_right(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'D')
+                            {
+                                turn_cube_down(cube);
+                            }
+                        }
+                        loaded_x[num_loaded] = test_x;
+                        loaded_y[num_loaded] = test_y;
+                        num_loaded++;
+#ifdef DEBUG_DAY_22
+                        printf("  Face loaded. Cube is now:\n");
+                        display_cube(cube);
+#endif
+                        break; // reset out
+                    }
+                }
+            }
+
+            // check right
+            test_y = loaded_y[i];
+            test_x = loaded_x[i]+cube->edge_length;
+            if (test_x < (board->num_cols-1))
+            {
+#ifdef DEBUG_DAY_22
+                printf(" Checking right of row=%d col=%d at row=%d col=%d\n", loaded_y[i], loaded_x[i], test_y, test_x);
+#endif
+                if (board->layout[test_y][test_x] != DAY_22_VOID)
+                {
+#ifdef DEBUG_DAY_22
+                    printf("  Potential loading point found\n");
+#endif
+                    int loaded = FALSE;
+                    for (int j=0; j<num_loaded; j++)
+                    {
+                        if ((loaded_x[j] == test_x) && (loaded_y[j] == test_y))
+                        {
+                            loaded = TRUE;
+                            break;
+                        }
+                    }
+                    if (loaded == TRUE)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Already loaded; skipping\n");
+#endif
+                    }
+                    else
+                    {
+                        snprintf(path_to_load[num_loaded], 20, "%sR", path_to_load[i]);
+#ifdef DEBUG_DAY_22
+                        printf("  Loading from path %s\n", path_to_load[num_loaded]);
+#endif
+                        int path_length = strlen(path_to_load[num_loaded]);
+                        for (int j=0; j<path_length; j++)
+                        {
+                            if (path_to_load[num_loaded][j] == 'L')
+                            {
+                                turn_cube_right(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'R')
+                            {
+                                turn_cube_left(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'D')
+                            {
+                                turn_cube_up(cube);
+                            }
+                        }
+                        load_face_from_board(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT], board, test_y, test_x);
+                        copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT], &cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+                        for (int j=path_length-1; j>=0; j--)
+                        {
+                            if (path_to_load[num_loaded][j] == 'L')
+                            {
+                                turn_cube_left(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'R')
+                            {
+                                turn_cube_right(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'D')
+                            {
+                                turn_cube_down(cube);
+                            }
+                        }
+                        loaded_x[num_loaded] = test_x;
+                        loaded_y[num_loaded] = test_y;
+                        num_loaded++;
+#ifdef DEBUG_DAY_22
+                        printf("  Face loaded. Cube is now:\n");
+                        display_cube(cube);
+#endif
+                        break; // reset out
+                    }
+                }
+            }
+
+            // check bottom
+            test_y = loaded_y[i]+cube->edge_length;
+            test_x = loaded_x[i];
+            if (test_y < (board->num_rows-1))
+            {
+#ifdef DEBUG_DAY_22
+                printf(" Checking bottom of row=%d col=%d at row=%d col=%d\n", loaded_y[i], loaded_x[i], test_y, test_x);
+#endif
+                if (board->layout[test_y][test_x] != DAY_22_VOID)
+                {
+#ifdef DEBUG_DAY_22
+                    printf("  Potential loading point found\n");
+#endif
+                    int loaded = FALSE;
+                    for (int j=0; j<num_loaded; j++)
+                    {
+                        if ((loaded_x[j] == test_x) && (loaded_y[j] == test_y))
+                        {
+                            loaded = TRUE;
+                            break;
+                        }
+                    }
+                    if (loaded == TRUE)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Already loaded; skipping\n");
+#endif
+                    }
+                    else
+                    {
+                        snprintf(path_to_load[num_loaded], 20, "%sD", path_to_load[i]);
+#ifdef DEBUG_DAY_22
+                        printf("  Loading from path %s\n", path_to_load[num_loaded]);
+#endif
+                        int path_length = strlen(path_to_load[num_loaded]);
+                        for (int j=0; j<path_length; j++)
+                        {
+                            if (path_to_load[num_loaded][j] == 'L')
+                            {
+                                turn_cube_right(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'R')
+                            {
+                                turn_cube_left(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'D')
+                            {
+                                turn_cube_up(cube);
+                            }
+                        }
+                        load_face_from_board(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT], board, test_y, test_x);
+                        copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT], &cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+                        for (int j=path_length-1; j>=0; j--)
+                        {
+                            if (path_to_load[num_loaded][j] == 'L')
+                            {
+                                turn_cube_left(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'R')
+                            {
+                                turn_cube_right(cube);
+                            }
+                            if (path_to_load[num_loaded][j] == 'D')
+                            {
+                                turn_cube_down(cube);
+                            }
+                        }
+                        loaded_x[num_loaded] = test_x;
+                        loaded_y[num_loaded] = test_y;
+                        num_loaded++;
+#ifdef DEBUG_DAY_22
+                        printf("  Face loaded. Cube is now:\n");
+                        display_cube(cube);
+#endif
+                        break; // reset out
+                    }
+                }
+            }
+
+        }
+    }
 }
 
 void day_22_part_2(char * filename, extra_args_t * extra_args, char * result)

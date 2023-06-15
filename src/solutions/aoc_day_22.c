@@ -542,6 +542,7 @@ static void update_back_face(day_22_face_t * to_face, day_22_face_t * from_face)
 {
     if (from_face->loaded == FALSE)
     {
+        copy_face(to_face, from_face);
         return;
     }
     if (to_face->loaded == FALSE)
@@ -714,6 +715,11 @@ static void load_cube_from_board(day_22_cube_t * cube, day_22_board_t * board)
     turn_cube_down(cube);
     display_cube(cube);
     
+    turn_cube_left(cube);
+    turn_cube_left(cube);
+    turn_cube_up(cube);
+    turn_cube_up(cube);
+    display_cube(cube);
 }
 
 void day_22_part_2(char * filename, extra_args_t * extra_args, char * result)

@@ -31,6 +31,15 @@
 
 #define PART_2_MAX_EDGE_LENGTH 50
 
+#define DAY_22_FACE_FRONT 0
+#define DAY_22_FACE_RIGHT 1
+#define DAY_22_FACE_BACK 2
+#define DAY_22_FACE_LEFT 3
+
+#define DAY_22_FACE_BOTTOM 1
+#define DAY_22_FACE_TOP 3
+
+
 struct day_22_instruction
 {
     int type;
@@ -87,6 +96,7 @@ struct day_22_face
 {
     int loaded;
     int edge_length;
+    int map_up_direction;
     day_22_cell_t cells[PART_2_MAX_EDGE_LENGTH][PART_2_MAX_EDGE_LENGTH];
 };
 
@@ -97,8 +107,8 @@ typedef struct day_22_face day_22_face_t;
 struct day_22_cube
 {
     int edge_length;
-    day_22_face_t left_right_rotation_faces[4];
-    day_22_face_t up_down_rotation_faces[4];
+    day_22_face_t left_right_rotation_faces[4]; // front, right, back, left
+    day_22_face_t up_down_rotation_faces[4]; // front, bottom, back, top
 };
 
 typedef struct day_22_cube day_22_cube_t;

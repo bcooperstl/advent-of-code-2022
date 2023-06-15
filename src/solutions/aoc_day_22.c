@@ -448,13 +448,39 @@ static void display_face(day_22_face_t * face)
 {
     for (int y=0; y<face->edge_length; y++)
     {
-        printf("|");
+        printf("%c", direction_chars[face->map_up_direction]);
         for (int x=0; x<face->edge_length; x++)
         {
             printf("%c", face->cells[y][x].value);
         }
-        printf("|\n");
+        printf("%c\n", direction_chars[face->map_up_direction]);
     }
+    return;
+}
+
+static void display_cube(day_22_cube_t * cube)
+{
+    printf("***DISPLAYING CUBE***\n");
+    printf("Left-Right faces:\n");
+    printf("Front face:\n");
+    display_face(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+    printf("Right face:\n");
+    display_face(&cube->left_right_rotation_faces[DAY_22_FACE_RIGHT]);
+    printf("Back face:\n");
+    display_face(&cube->left_right_rotation_faces[DAY_22_FACE_BACK]);
+    printf("Left face:\n");
+    display_face(&cube->left_right_rotation_faces[DAY_22_FACE_LEFT]);
+    
+    printf("Up-Down faces:\n");
+    printf("Front face:\n");
+    display_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT]);
+    printf("Bottom face:\n");
+    display_face(&cube->up_down_rotation_faces[DAY_22_FACE_BOTTOM]);
+    printf("Back face:\n");
+    display_face(&cube->up_down_rotation_faces[DAY_22_FACE_BACK]);
+    printf("Top face:\n");
+    display_face(&cube->up_down_rotation_faces[DAY_22_FACE_TOP]);
+
     return;
 }
 
@@ -478,6 +504,7 @@ static void rotate_face_clockwise(day_22_face_t * face)
             memcpy(&face->cells[src_x][(face->edge_length - 1) - src_y], &temp.cells[src_y][src_x], sizeof(day_22_cell_t));
         }
     }
+    face->map_up_direction = (face->map_up_direction + 1)%4;
 #ifdef DEBUG_DAY_22
     printf("After rotating clockwise:\n");
     display_face(face);
@@ -504,11 +531,131 @@ static void rotate_face_counter_clockwise(day_22_face_t * face)
             memcpy(&face->cells[(face->edge_length - 1) - src_x][src_y], &temp.cells[src_y][src_x], sizeof(day_22_cell_t));
         }
     }
+    face->map_up_direction = (face->map_up_direction + 3)%4;
 #ifdef DEBUG_DAY_22
     printf("After rotating counter-clockwise:\n");
     display_face(face);
 #endif
-}    
+}
+
+static void update_back_face(day_22_face_t * to_face, day_22_face_t * from_face)
+{
+    if (from_face->loaded == FALSE)
+    {
+        return;
+    }
+    if (to_face->loaded == FALSE)
+    {
+        to_face->loaded = TRUE;
+        to_face->edge_length = from_face->edge_length;
+    }
+#ifdef DEBUG_DAY_22
+    printf("Source for back:\n");
+    display_face(from_face);
+#endif
+    // source[y][x] --> dest[(edge_length-1)-y][(edge_length-1)-x]
+    for (int src_y=0; src_y<from_face->edge_length; src_y++)
+    {
+        for (int src_x=0; src_x<from_face->edge_length; src_x++)
+        {
+            memcpy(&to_face->cells[(from_face->edge_length - 1) - src_y][(from_face->edge_length - 1) - src_x], &from_face->cells[src_y][src_x], sizeof(day_22_cell_t));
+        }
+    }
+    to_face->map_up_direction = (from_face->map_up_direction + 2)%4;
+#ifdef DEBUG_DAY_22
+    printf("Destination for back:\n");
+    display_face(to_face);
+#endif
+}
+
+// Turning a cube to the left means the front face moves left, the right face to moves front, etc
+// The top face will rotate clockwise, and the bottom face will rotate counter-clockwise
+static void turn_cube_left(day_22_cube_t * cube)
+{
+#ifdef DEBUG_DAY_22
+    printf("Turning cube to the left\n");
+#endif
+    day_22_face_t temp;
+    copy_face(&temp, &cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT], &cube->left_right_rotation_faces[DAY_22_FACE_RIGHT]);
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_RIGHT], &cube->left_right_rotation_faces[DAY_22_FACE_BACK]);
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_BACK], &cube->left_right_rotation_faces[DAY_22_FACE_LEFT]);
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_LEFT], &temp);
+    
+    
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT], &cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+    rotate_face_clockwise(&cube->up_down_rotation_faces[DAY_22_FACE_TOP]);
+    rotate_face_counter_clockwise(&cube->up_down_rotation_faces[DAY_22_FACE_BOTTOM]);
+
+    update_back_face(&cube->up_down_rotation_faces[DAY_22_FACE_BACK], &cube->left_right_rotation_faces[DAY_22_FACE_BACK]);
+    return;
+}
+
+// Turning a cube to the right means the front face moves right, the left face to moves front, etc
+// The top face will rotate counter-clockwise, and the bottom face will rotate clockwise
+static void turn_cube_right(day_22_cube_t * cube)
+{
+#ifdef DEBUG_DAY_22
+    printf("Turning cube to the right\n");
+#endif
+    day_22_face_t temp;
+    copy_face(&temp, &cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT], &cube->left_right_rotation_faces[DAY_22_FACE_LEFT]);
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_LEFT], &cube->left_right_rotation_faces[DAY_22_FACE_BACK]);
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_BACK], &cube->left_right_rotation_faces[DAY_22_FACE_RIGHT]);
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_RIGHT], &temp);
+    
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT], &cube->left_right_rotation_faces[DAY_22_FACE_FRONT]);
+    rotate_face_counter_clockwise(&cube->up_down_rotation_faces[DAY_22_FACE_TOP]);
+    rotate_face_clockwise(&cube->up_down_rotation_faces[DAY_22_FACE_BOTTOM]);
+
+    update_back_face(&cube->up_down_rotation_faces[DAY_22_FACE_BACK], &cube->left_right_rotation_faces[DAY_22_FACE_BACK]);
+    return;
+}
+
+// Turning a cube up means the front face moves up, the bottom face to moves front, etc
+// The right face will rotate clockwise, and the left face will rotate counter-clockwise
+static void turn_cube_up(day_22_cube_t * cube)
+{
+#ifdef DEBUG_DAY_22
+    printf("Turning cube up\n");
+#endif
+    day_22_face_t temp;
+    copy_face(&temp, &cube->up_down_rotation_faces[DAY_22_FACE_FRONT]);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT], &cube->up_down_rotation_faces[DAY_22_FACE_BOTTOM]);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_BOTTOM], &cube->up_down_rotation_faces[DAY_22_FACE_BACK]);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_BACK], &cube->up_down_rotation_faces[DAY_22_FACE_TOP]);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_TOP], &temp);
+    
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT], &cube->up_down_rotation_faces[DAY_22_FACE_FRONT]);
+    rotate_face_clockwise(&cube->left_right_rotation_faces[DAY_22_FACE_RIGHT]);
+    rotate_face_counter_clockwise(&cube->left_right_rotation_faces[DAY_22_FACE_LEFT]);
+
+    update_back_face(&cube->left_right_rotation_faces[DAY_22_FACE_BACK], &cube->up_down_rotation_faces[DAY_22_FACE_BACK]);
+    return;
+}
+
+// Turning a cube down means the front face moves to the bottom, the top face to moves front, etc
+// The right face will rotate counter-clockwise, and the left face will rotate clockwise
+static void turn_cube_down(day_22_cube_t * cube)
+{
+#ifdef DEBUG_DAY_22
+    printf("Turning cube down\n");
+#endif
+    day_22_face_t temp;
+    copy_face(&temp, &cube->up_down_rotation_faces[DAY_22_FACE_FRONT]);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_FRONT], &cube->up_down_rotation_faces[DAY_22_FACE_TOP]);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_TOP], &cube->up_down_rotation_faces[DAY_22_FACE_BACK]);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_BACK], &cube->up_down_rotation_faces[DAY_22_FACE_BOTTOM]);
+    copy_face(&cube->up_down_rotation_faces[DAY_22_FACE_BOTTOM], &temp);
+    
+    copy_face(&cube->left_right_rotation_faces[DAY_22_FACE_FRONT], &cube->up_down_rotation_faces[DAY_22_FACE_FRONT]);
+    rotate_face_counter_clockwise(&cube->left_right_rotation_faces[DAY_22_FACE_RIGHT]);
+    rotate_face_clockwise(&cube->left_right_rotation_faces[DAY_22_FACE_LEFT]);
+
+    update_back_face(&cube->left_right_rotation_faces[DAY_22_FACE_BACK], &cube->up_down_rotation_faces[DAY_22_FACE_BACK]);
+    return;
+}
 
 static void load_face_from_board(day_22_face_t * face, day_22_board_t * board, int start_y, int start_x)
 {
@@ -527,7 +674,7 @@ static void load_face_from_board(day_22_face_t * face, day_22_board_t * board, i
             face->cells[dest_y][dest_x].input_col = start_x+dest_x;
         }
     }
-    
+    face->map_up_direction = DAY_22_UP;
     face->loaded = TRUE;
 }
 
@@ -553,8 +700,19 @@ static void load_cube_from_board(day_22_cube_t * cube, day_22_board_t * board)
     printf("Up/Down front face:\n");
     display_face(&cube->up_down_rotation_faces[0]);
 #endif
-    rotate_face_clockwise(&cube->left_right_rotation_faces[0]);
-    rotate_face_counter_clockwise(&cube->left_right_rotation_faces[0]);
+    display_cube(cube);
+    
+    turn_cube_left(cube);
+    display_cube(cube);
+    
+    turn_cube_right(cube);
+    display_cube(cube);
+    
+    turn_cube_up(cube);
+    display_cube(cube);
+    
+    turn_cube_down(cube);
+    display_cube(cube);
     
 }
 

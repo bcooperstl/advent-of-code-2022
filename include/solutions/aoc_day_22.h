@@ -19,7 +19,7 @@
 
 #define DAY_22_MOVE_RIGHT '>'
 #define DAY_22_MOVE_DOWN 'v'
-#define DAY_22_MOVE_LEFT '>'
+#define DAY_22_MOVE_LEFT '<'
 #define DAY_22_MOVE_UP '^'
 
 #define DAY_22_INSTRUCTION_GO       100

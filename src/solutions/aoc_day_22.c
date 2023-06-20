@@ -491,7 +491,7 @@ static void rotate_face_clockwise(day_22_face_t * face)
         return;
     }
 #ifdef DEBUG_DAY_22
-    printf("Before rotating clockwise:\n");
+    printf("Before rotating clockwise with up direction %d %c:\n", face->map_up_direction, direction_chars[face->map_up_direction]);
     display_face(face);
 #endif
     day_22_face_t temp;
@@ -506,7 +506,7 @@ static void rotate_face_clockwise(day_22_face_t * face)
     }
     face->map_up_direction = (face->map_up_direction + 1)%4;
 #ifdef DEBUG_DAY_22
-    printf("After rotating clockwise:\n");
+    printf("After rotating clockwise with up direction %d %c:\n", face->map_up_direction, direction_chars[face->map_up_direction]);
     display_face(face);
 #endif
 }    
@@ -518,7 +518,7 @@ static void rotate_face_counter_clockwise(day_22_face_t * face)
         return;
     }
 #ifdef DEBUG_DAY_22
-    printf("Before rotating counter-clockwise:\n");
+    printf("Before rotating counter-clockwise with up direction %d %c:\n", face->map_up_direction, direction_chars[face->map_up_direction]);
     display_face(face);
 #endif
     day_22_face_t temp;
@@ -533,7 +533,7 @@ static void rotate_face_counter_clockwise(day_22_face_t * face)
     }
     face->map_up_direction = (face->map_up_direction + 3)%4;
 #ifdef DEBUG_DAY_22
-    printf("After rotating counter-clockwise:\n");
+    printf("After rotating counter-clockwise with up direction %d %c:\n", face->map_up_direction, direction_chars[face->map_up_direction]);
     display_face(face);
 #endif
 }

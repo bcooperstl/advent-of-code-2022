@@ -1112,6 +1112,291 @@ static void init_cube_game(day_22_cube_game_t * game)
     return;
 }
 
+static void perform_turn_instruction_cube(day_22_cube_game_t * game, char direction)
+{
+    if (direction == DAY_22_CLOCKWISE)
+    {
+#ifdef DEBUG_DAY_22
+        printf(" Turning clockwise from %c", direction_chars[game->direction]);
+#endif
+        game->direction = (game->direction + 1)%4;
+    }
+    else if (direction == DAY_22_COUNTER_CLOCKWISE)
+    {
+#ifdef DEBUG_DAY_22
+        printf(" Turning counter-clockwise from %c", direction_chars[game->direction]);
+#endif
+        game->direction = (game->direction + 3)%4;
+    }
+    else
+    {
+        fprintf(stderr, "****INVALID DIRECTION [%c] TO TURN******\n", direction);
+        return;
+    }
+#ifdef DEBUG_DAY_22
+    printf(" to %c", direction_chars[game->direction]);
+#endif
+    map_cube_position(game);
+    return;
+}
+
+static void perform_move_instruction_cube(day_22_cube_game_t * game, int num_to_go)
+{
+    switch (game->direction)
+    {
+        case DAY_22_RIGHT:
+#ifdef DEBUG_DAY_22
+            printf(" Moving %d to the right starting at row=%d col=%d\n", num_to_go, game->pos_y, game->pos_x);
+#endif
+            for (int i=0; i<num_to_go; i++)
+            {
+                int next_x = game->pos_x + 1;
+#ifdef DEBUG_DAY_22
+                printf("  Move %d increments to col=%d\n", i+1, next_x);
+#endif
+                if (next_x == game->cube.edge_length) // this will cause wrap to next face
+                {
+#ifdef DEBUG_DAY_22
+                    printf("  Move %d wraps to the right cube face at col 0\n", i+1);
+#endif
+                    day_22_cell_t target_cell = game->cube.left_right_rotation_faces[DAY_22_FACE_RIGHT].cells[game->pos_y][0];
+                    if (target_cell.value == DAY_22_WALL)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Wall detected on move %d; moving stops with final position at row=%d, col=%d\n", i+1, game->pos_y, game->pos_x);
+#endif
+                        break;
+                    }
+                    // no wall detected - turn the cube left and set pos_x to 0
+                    else
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  No wall detected on move %d; turning cube left and setting position to row=%d, col=0\n", i+1, game->pos_y);
+#endif
+                        turn_cube_left(&game->cube);
+                        game->pos_x = 0;
+     
+                    }
+                    
+                }
+                else // can stay on the same face
+                {
+                    if (game->cube.left_right_rotation_faces[DAY_22_FACE_FRONT].cells[game->pos_y][next_x].value == DAY_22_WALL)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Wall detected on move %d; moving stops with final position at row=%d, col=%d\n", i+1, game->pos_y, game->pos_x);
+#endif
+                        break;
+                    }
+                    else
+                    {
+                        game->pos_x=next_x;
+                    }
+                }
+                map_cube_position(game);
+#ifdef DEBUG_DAY_22
+                printf("  Move performed. Current location is row=%d col=%d\n", game->pos_y, game->pos_x);
+#endif
+            }
+            break;
+
+        case DAY_22_LEFT:
+#ifdef DEBUG_DAY_22
+            printf(" Moving %d to the left starting at row=%d col=%d\n", num_to_go, game->pos_y, game->pos_x);
+#endif
+            for (int i=0; i<num_to_go; i++)
+            {
+                int next_x = game->pos_x - 1;
+#ifdef DEBUG_DAY_22
+                printf("  Move %d increments to col=%d\n", i+1, next_x);
+#endif
+                if (next_x == -1) // this will cause wrap to next face
+                {
+#ifdef DEBUG_DAY_22
+                    printf("  Move %d wraps to the left cube face at col %d\n", i+1, game->cube.edge_length-1);
+#endif
+                    day_22_cell_t target_cell = game->cube.left_right_rotation_faces[DAY_22_FACE_LEFT].cells[game->pos_y][game->cube.edge_length-1];
+                    if (target_cell.value == DAY_22_WALL)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Wall detected on move %d; moving stops with final position at row=%d, col=%d\n", i+1, game->pos_y, game->pos_x);
+#endif
+                        break;
+                    }
+                    // no wall detected - turn the cube right and set pos_x to edge-length - 1
+                    else
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  No wall detected on move %d; turning cube left and setting position to row=%d, col=%d\n", i+1, game->pos_y, game->cube.edge_length-1);
+#endif
+                        turn_cube_right(&game->cube);
+                        game->pos_x = game->cube.edge_length-1;
+     
+                    }
+                    
+                }
+                else // can stay on the same face
+                {
+                    if (game->cube.left_right_rotation_faces[DAY_22_FACE_FRONT].cells[game->pos_y][next_x].value == DAY_22_WALL)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Wall detected on move %d; moving stops with final position at row=%d, col=%d\n", i+1, game->pos_y, game->pos_x);
+#endif
+                        break;
+                    }
+                    else
+                    {
+                        game->pos_x=next_x;
+                    }
+                }
+                map_cube_position(game);
+#ifdef DEBUG_DAY_22
+                printf("  Move performed. Current location is row=%d col=%d\n", game->pos_y, game->pos_x);
+#endif
+            }
+            break;
+
+        case DAY_22_DOWN:
+#ifdef DEBUG_DAY_22
+            printf(" Moving %d down starting at row=%d col=%d\n", num_to_go, game->pos_y, game->pos_x);
+#endif
+            for (int i=0; i<num_to_go; i++)
+            {
+                int next_y = game->pos_y + 1;
+#ifdef DEBUG_DAY_22
+                printf("  Move %d increments to row=%d\n", i+1, next_y);
+#endif
+                if (next_y == game->cube.edge_length) // this will cause wrap to next face
+                {
+#ifdef DEBUG_DAY_22
+                    printf("  Move %d wraps to the bottom cube face at row 0\n", i+1);
+#endif
+                    day_22_cell_t target_cell = game->cube.up_down_rotation_faces[DAY_22_FACE_BOTTOM].cells[0][game->pos_x];
+                    if (target_cell.value == DAY_22_WALL)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Wall detected on move %d; moving stops with final position at row=%d, col=%d\n", i+1, game->pos_y, game->pos_x);
+#endif
+                        break;
+                    }
+                    // no wall detected - turn the cube up and set pos_y to 0
+                    else
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  No wall detected on move %d; turning cube up and setting position to row=0, col=%d\n", i+1, game->pos_x);
+#endif
+                        turn_cube_up(&game->cube);
+                        game->pos_y = 0;
+     
+                    }
+                    
+                }
+                else // can stay on the same face
+                {
+                    if (game->cube.up_down_rotation_faces[DAY_22_FACE_FRONT].cells[next_y][game->pos_x].value == DAY_22_WALL)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Wall detected on move %d; moving stops with final position at row=%d, col=%d\n", i+1, game->pos_y, game->pos_x);
+#endif
+                        break;
+                    }
+                    else
+                    {
+                        game->pos_y=next_y;
+                    }
+                }
+                map_cube_position(game);
+#ifdef DEBUG_DAY_22
+                printf("  Move performed. Current location is row=%d col=%d\n", game->pos_y, game->pos_x);
+#endif
+            }
+            break;
+
+        case DAY_22_UP:
+#ifdef DEBUG_DAY_22
+            printf(" Moving %d up starting at row=%d col=%d\n", num_to_go, game->pos_y, game->pos_x);
+#endif
+            for (int i=0; i<num_to_go; i++)
+            {
+                int next_y = game->pos_y - 1;
+#ifdef DEBUG_DAY_22
+                printf("  Move %d increments to row=%d\n", i+1, next_y);
+#endif
+                if (next_y == -1) // this will cause wrap to next face
+                {
+#ifdef DEBUG_DAY_22
+                    printf("  Move %d wraps to the top cube face at row %d\n", i+1, game->cube.edge_length-1);
+#endif
+                    day_22_cell_t target_cell = game->cube.up_down_rotation_faces[DAY_22_FACE_TOP].cells[game->cube.edge_length-1][game->pos_x];
+                    if (target_cell.value == DAY_22_WALL)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Wall detected on move %d; moving stops with final position at row=%d, col=%d\n", i+1, game->pos_y, game->pos_x);
+#endif
+                        break;
+                    }
+                    // no wall detected - turn the cube down and set pos_y to game->cube.edge_length-1
+                    else
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  No wall detected on move %d; turning cube down and setting position to row=%d, col=%d\n", i+1, game->cube.edge_length-1, game->pos_x);
+#endif
+                        turn_cube_down(&game->cube);
+                        game->pos_y = game->cube.edge_length-1;
+     
+                    }
+                    
+                }
+                else // can stay on the same face
+                {
+                    if (game->cube.up_down_rotation_faces[DAY_22_FACE_FRONT].cells[next_y][game->pos_x].value == DAY_22_WALL)
+                    {
+#ifdef DEBUG_DAY_22
+                        printf("  Wall detected on move %d; moving stops with final position at row=%d, col=%d\n", i+1, game->pos_y, game->pos_x);
+#endif
+                        break;
+                    }
+                    else
+                    {
+                        game->pos_y=next_y;
+                    }
+                }
+                map_cube_position(game);
+#ifdef DEBUG_DAY_22
+                printf("  Move performed. Current location is row=%d col=%d\n", game->pos_y, game->pos_x);
+#endif
+            }
+            break;
+
+    }
+    return;
+}
+
+static void play_cube_game(day_22_cube_game_t * game)
+{
+    while (game->instructions_performed < game->instructions.num_instructions)
+    {
+#ifdef DEBUG_DAY_22
+        printf("Performing instruction %d\n", game->instructions_performed);
+#endif
+        if (game->instructions.instructions[game->instructions_performed].type == DAY_22_INSTRUCTION_TURN)
+        {
+            perform_turn_instruction_cube(game, game->instructions.instructions[game->instructions_performed].direction_to_turn);
+        }
+        else
+        {
+            perform_move_instruction_cube(game, game->instructions.instructions[game->instructions_performed].num_to_go);
+        }
+#ifdef DEBUG_DAY_22
+        printf("Resulting board is:\n");
+        display_board(&game->tracking_board);
+#endif
+        game->instructions_performed++;
+    }
+}
+
+
+
 static int calculate_score_cube(day_22_cube_game_t * game)
 {
     day_22_cell_t * final_cell = &game->cube.left_right_rotation_faces[DAY_22_FACE_FRONT].cells[game->pos_y][game->pos_x];
@@ -1137,6 +1422,8 @@ void day_22_part_2(char * filename, extra_args_t * extra_args, char * result)
     printf("Performing part 2 with edge length %d\n", game.cube.edge_length);
     
     init_cube_game(&game);
+    
+    play_cube_game(&game);
     
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", calculate_score_cube(&game));
     

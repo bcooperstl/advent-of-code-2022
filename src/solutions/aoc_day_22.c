@@ -957,25 +957,188 @@ static void load_cube_from_board(day_22_cube_t * cube, day_22_board_t * board)
     }
 }
 
+static void read_and_parse_input_cube(char * filename, day_22_cube_game_t * cube_game)
+{
+    file_data_t fd;
+    
+    // read in the input file;  no delimiters
+    
+    file_data_init(&fd);
+    file_data_read_file(&fd, filename, "", 0, '\0', '\0');
+    if (fd.num_lines == 0)
+    {
+        fprintf(stderr, "Error reading in data from %s\n", filename);
+        file_data_cleanup(&fd);
+        return;
+    }
+    
+    init_board(&cube_game->tracking_board, DAY_22_VOID);
+    cube_game->tracking_board.num_rows = 1; // skip the first row - all spaces
+    cube_game->tracking_board.num_cols = 2; // at least 2 columns - left and right spaces
+    
+    line_data_t * ld = fd.head_line;
+    
+    while (ld != NULL && strlen(ld->head_token->token) > 0)
+    {
+        char * token = ld->head_token->token;
+        printf("[%s]\n", token);
+        int row_len = strlen(token);
+        if ((row_len + 2) > cube_game->tracking_board.num_cols)
+        {
+            cube_game->tracking_board.num_cols = row_len + 2; // add the 2 for the left and right space
+        }
+        
+        
+        memcpy(&cube_game->tracking_board.layout[cube_game->tracking_board.num_rows][1], token, row_len);
+        
+        cube_game->tracking_board.num_rows++;
+        ld = ld->next;
+    }
+    
+    cube_game->tracking_board.num_rows++; // bottom row of spaces
+    
+    // set null terminators after the right added space in each column
+    for (int y=0; y<cube_game->tracking_board.num_rows; y++)
+    {
+        cube_game->tracking_board.layout[y][cube_game->tracking_board.num_cols] = '\0';
+    }
+
+    set_min_max(&cube_game->tracking_board);    
+
+#ifdef DEBUG_DAY_22
+    printf("Initial tracking board:\n");
+    display_board(&cube_game->tracking_board);
+#endif
+
+    ld = ld->next; // skip blank line to instructions line
+    char * inst_line = ld->head_token->token;
+    int inst_length = strlen(inst_line);
+    int inst_line_idx = 0;
+    
+    init_instructions(&cube_game->instructions);
+    
+    do
+    {
+        char inst = inst_line[inst_line_idx];
+        if (inst == DAY_22_CLOCKWISE || inst == DAY_22_COUNTER_CLOCKWISE)
+        {
+            // this insturction is a turn
+            cube_game->instructions.instructions[cube_game->instructions.num_instructions].type = DAY_22_INSTRUCTION_TURN;
+            cube_game->instructions.instructions[cube_game->instructions.num_instructions].direction_to_turn = inst;
+#ifdef DEBUG_DAY_22
+            printf("Instruction %d is to turn %c\n", cube_game->instructions.num_instructions, cube_game->instructions.instructions[cube_game->instructions.num_instructions].direction_to_turn);
+#endif
+            inst_line_idx++;
+        }
+        else
+        {
+            // this instruction is to move either 1 or 2 digit number of spaces - inspected input file
+            cube_game->instructions.instructions[cube_game->instructions.num_instructions].type = DAY_22_INSTRUCTION_GO;
+            cube_game->instructions.instructions[cube_game->instructions.num_instructions].num_to_go = strtol(&inst_line[inst_line_idx], NULL, 10);
+#ifdef DEBUG_DAY_22
+            printf("Instruction %d is move forward %d\n", cube_game->instructions.num_instructions, cube_game->instructions.instructions[cube_game->instructions.num_instructions].num_to_go);
+#endif
+            if (cube_game->instructions.instructions[cube_game->instructions.num_instructions].num_to_go > 9)
+            {
+                inst_line_idx += 2;
+            }
+            else
+            {
+                inst_line_idx += 1;
+            }
+        }
+        cube_game->instructions.num_instructions++;
+    } while(inst_line_idx < inst_length);
+
+    
+    file_data_cleanup(&fd);
+    
+    return;
+}
+
+// game_direction is the way we are oriented on the face of the cube
+// map_up_direction is the way the cube is oriented with respect to the original input
+static int calculate_net_direction(int game_direction, int map_up_direction)
+{
+    /* examples:
+    map-direction  |  game-direction  |  net direction
+    right (0)      |  right (0)       |  up (3)
+    right (0)      |  down (1)        |  right (0)
+    right (0)      |  left (2)        |  down (1)
+    right (0)      |  up (3)          |  left (2)
+    down (1)       |  right (0)       |  left (2)
+    down (1)       |  down (1)        |  up (3)
+    down (1)       |  left (2)        |  right (0)
+    down (1)       |  up (3)          |  down (1)
+    left (2)       |  right (0)       |  down (1)
+    left (2)       |  down (1)        |  left (2)
+    left (2)       |  left (2)        |  up (3)
+    left (2)       |  up (3)          |  right (0)
+    up (3)         |  right (0)       |  right (0)
+    up (3)         |  down (1)        |  down (1)
+    up (3)         |  left (2)        |  left (2)
+    up (3)         |  up (3)          |  up (3)  
+    
+    net = (3 - map_direction + game_direction) % 4
+    
+    */
+    
+    return (3 - map_up_direction + game_direction) % 4; 
+}
+
+
+static void map_cube_position(day_22_cube_game_t * game)
+{
+    day_22_cell_t * cell = &game->cube.left_right_rotation_faces[DAY_22_FACE_FRONT].cells[game->pos_y][game->pos_x];
+    
+    game->tracking_board.layout[cell->input_row][cell->input_col]=direction_chars[calculate_net_direction(game->direction, game->cube.left_right_rotation_faces[DAY_22_FACE_FRONT].map_up_direction)];
+    return;
+}
+
+static void init_cube_game(day_22_cube_game_t * game)
+{
+    load_cube_from_board(&game->cube, &game->tracking_board);
+
+    game->pos_y = 0; // start on the first row for the face - 0-indexed for faces
+    game->pos_x = 0; // start on the first column for the face - 0-indexed for faces
+    game->direction = DAY_22_RIGHT; // start facing right
+    game->instructions_performed = 0;
+    map_cube_position(game);
+#ifdef DEBUG_DAY_22
+    printf("Initial tracking board:\n");
+    display_board(&game->tracking_board);
+#endif
+    
+    return;
+}
+
+static int calculate_score_cube(day_22_cube_game_t * game)
+{
+    day_22_cell_t * final_cell = &game->cube.left_right_rotation_faces[DAY_22_FACE_FRONT].cells[game->pos_y][game->pos_x];
+    
+    return ((1000 * final_cell->input_row) + 
+            (4 * final_cell->input_col) +
+            (calculate_net_direction(game->direction, game->cube.left_right_rotation_faces[DAY_22_FACE_FRONT].map_up_direction)));
+}
+
 void day_22_part_2(char * filename, extra_args_t * extra_args, char * result)
 {
-    day_22_game_t game;
-    day_22_cube_t cube;
+    day_22_cube_game_t game;
     
-    read_and_parse_input(filename, &game);
+    read_and_parse_input_cube(filename, &game);
     
-    cube.edge_length = PART_2_MAX_EDGE_LENGTH;
+    game.cube.edge_length = PART_2_MAX_EDGE_LENGTH;
     
     if (extra_args->num_extra_args == 1)
     {
-        cube.edge_length = strtol(extra_args->extra_args[0], NULL, 10);
+        game.cube.edge_length = strtol(extra_args->extra_args[0], NULL, 10);
     }
     
-    printf("Performing part 2 with edge length %d\n", cube.edge_length);
+    printf("Performing part 2 with edge length %d\n", game.cube.edge_length);
     
-    load_cube_from_board(&cube, &game.layout_board);
-
-    snprintf(result, MAX_RESULT_LENGTH+1, "%d", calculate_score(&game));
+    init_cube_game(&game);
+    
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", calculate_score_cube(&game));
     
     return;
 }

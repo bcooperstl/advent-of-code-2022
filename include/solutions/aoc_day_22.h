@@ -113,6 +113,19 @@ struct day_22_cube
 
 typedef struct day_22_cube day_22_cube_t;
 
+struct day_22_cube_game
+{
+    day_22_board_t tracking_board;
+    day_22_cube_t  cube;
+    int pos_x; // always on front face
+    int pos_y; // always on front face
+    char direction; // always on front face
+    day_22_instructions_t instructions;
+    int instructions_performed;
+};
+
+typedef struct day_22_cube_game day_22_cube_game_t;
+
 void day_22_part_1(char * filename, extra_args_t * extra_args, char * result);
 void day_22_part_2(char * filename, extra_args_t * extra_args, char * result);
 

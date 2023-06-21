@@ -103,3 +103,5 @@
 22,2,day22_input.txt,137045
 23,1,test_cases/day23_test1.txt,110
 23,1,day23_input.txt,4241
+23,2,test_cases/day23_test1.txt,20
+23,2,day23_input.txt,1079

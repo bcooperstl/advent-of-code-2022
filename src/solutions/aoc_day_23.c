@@ -252,11 +252,12 @@ static void move_elf(day_23_elf_t * elf, aoc_screen_t * map)
     return;
 }
 
-void play_round(day_23_elves_t * elves, aoc_screen_t * map, day_23_direction_list_t * directions)
+static int play_round(day_23_elves_t * elves, aoc_screen_t * map, day_23_direction_list_t * directions)
 {
 #ifdef DEBUG_DAY_23
     printf("Playing a round\n");
 #endif
+    int num_moved = 0;
     // first step - find neighbors
     for (int i=0; i<elves->num_elves; i++)
     {
@@ -272,10 +273,11 @@ void play_round(day_23_elves_t * elves, aoc_screen_t * map, day_23_direction_lis
         if ((elves->elves[i].can_move == TRUE) && (elves->elves[i].proposed_direction != DAY_23_DIRECTION_STAY))
         {
             move_elf(&elves->elves[i], map);
+            num_moved++;
         }
     }
     
-    return;
+    return num_moved;;
 }
 
 static void check_and_expand_map(aoc_screen_t * map)
@@ -405,6 +407,54 @@ void day_23_part_1(char * filename, extra_args_t * extra_args, char * result)
 
 
     snprintf(result, MAX_RESULT_LENGTH+1, "%d", calculate_empty_in_region(&elves));
+
+    cleanup_screen(&map);
+
+    return;
+}
+
+void day_23_part_2(char * filename, extra_args_t * extra_args, char * result)
+{
+    day_23_elves_t elves;
+    aoc_screen_t map;
+    day_23_direction_list_t directions;
+    directions.directions[0] = DAY_23_DIRECTION_NORTH;
+    directions.directions[1] = DAY_23_DIRECTION_SOUTH;
+    directions.directions[2] = DAY_23_DIRECTION_WEST;
+    directions.directions[3] = DAY_23_DIRECTION_EAST;
+    
+
+    if (parse_input(filename, &map) != TRUE)
+    {
+        fprintf(stderr, "Error parsing input %s\n", filename);
+    }
+
+    init_elves(&elves, &map);
+
+    check_and_expand_map(&map);
+
+#ifdef DEBUG_DAY_23
+    printf("Expanded screen:\n");
+    display_screen(&map);
+#endif
+
+    int round=0;
+    int num_moved;
+    do 
+    {
+        num_moved = play_round(&elves, &map, &directions);
+        check_and_expand_map(&map);
+        printf("%d elves moved in round %d\n", num_moved, round+1);
+#ifdef DEBUG_DAY_23
+        printf("After round %d:\n", round+1);
+        display_screen(&map);
+#endif
+        advance_direction_list(&directions);
+        round++;
+    } while (num_moved > 0);
+
+
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", round);
 
     cleanup_screen(&map);
 

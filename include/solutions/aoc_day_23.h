@@ -43,6 +43,6 @@ struct day_23_direction_list
 typedef struct day_23_direction_list day_23_direction_list_t;
 
 void day_23_part_1(char * forestname, extra_args_t * extra_args, char * result);
-//void day_23_part_2(char * forestname, extra_args_t * extra_args, char * result);
+void day_23_part_2(char * forestname, extra_args_t * extra_args, char * result);
 
 #endif

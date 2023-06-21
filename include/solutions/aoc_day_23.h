@@ -35,6 +35,13 @@ struct day_23_elves
 
 typedef struct day_23_elves day_23_elves_t;
 
+struct day_23_direction_list
+{
+    int directions[4];
+};
+
+typedef struct day_23_direction_list day_23_direction_list_t;
+
 void day_23_part_1(char * forestname, extra_args_t * extra_args, char * result);
 //void day_23_part_2(char * forestname, extra_args_t * extra_args, char * result);
 

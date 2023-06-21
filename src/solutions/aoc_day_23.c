@@ -88,7 +88,79 @@ static void find_elf_neighbors(day_23_elf_t * elf, aoc_screen_t * map)
     return;
 }
 
-static void determine_move_from_neighbors(day_23_elf_t * elf)
+static int validate_direction_and_calulate_move(day_23_elf_t * elf, int direction)
+{
+    int result = FALSE;
+    switch (direction)
+    {
+        case DAY_23_DIRECTION_NORTH:
+            if ((elf->elf_neighbors[ELF_NEIGHBOR_N]  == FALSE) &&
+                (elf->elf_neighbors[ELF_NEIGHBOR_NE] == FALSE) &&
+                (elf->elf_neighbors[ELF_NEIGHBOR_NW] == FALSE))
+            {
+                    elf->proposed_direction = DAY_23_DIRECTION_NORTH;
+                    elf->proposed_x = elf->pos_x;
+                    elf->proposed_y = elf->pos_y - 1;
+#ifdef DEBUG_DAY_23
+                    printf("Elf at row=%d, col=%d will propose to move North to row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
+#endif        
+                    result = TRUE;
+            }
+            break;
+        case DAY_23_DIRECTION_SOUTH:
+            if ((elf->elf_neighbors[ELF_NEIGHBOR_S]  == FALSE) &&
+                    (elf->elf_neighbors[ELF_NEIGHBOR_SE] == FALSE) &&
+                    (elf->elf_neighbors[ELF_NEIGHBOR_SW] == FALSE))
+            {
+                elf->proposed_direction = DAY_23_DIRECTION_SOUTH;
+                elf->proposed_x = elf->pos_x;
+                elf->proposed_y = elf->pos_y + 1;
+#ifdef DEBUG_DAY_23
+                printf("Elf at row=%d, col=%d will propose to move South to row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
+#endif
+                result = TRUE;
+            }
+            break;
+            
+        case DAY_23_DIRECTION_WEST:
+            if ((elf->elf_neighbors[ELF_NEIGHBOR_W]  == FALSE) &&
+                    (elf->elf_neighbors[ELF_NEIGHBOR_NW] == FALSE) &&
+                    (elf->elf_neighbors[ELF_NEIGHBOR_SW] == FALSE))
+            {
+                elf->proposed_direction = DAY_23_DIRECTION_WEST;
+                elf->proposed_x = elf->pos_x - 1;
+                elf->proposed_y = elf->pos_y;
+#ifdef DEBUG_DAY_23
+                printf("Elf at row=%d, col=%d will propose to move West to row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
+#endif
+                result = TRUE;
+            }
+            break;
+
+        case DAY_23_DIRECTION_EAST:
+            if ((elf->elf_neighbors[ELF_NEIGHBOR_E]  == FALSE) &&
+                    (elf->elf_neighbors[ELF_NEIGHBOR_NE] == FALSE) &&
+                    (elf->elf_neighbors[ELF_NEIGHBOR_SE] == FALSE))
+            {
+                elf->proposed_direction = DAY_23_DIRECTION_EAST;
+                elf->proposed_x = elf->pos_x + 1;
+                elf->proposed_y = elf->pos_y;
+#ifdef DEBUG_DAY_23
+                printf("Elf at row=%d, col=%d will propose to move East to row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
+#endif
+                result = TRUE;
+            }
+            break;
+
+        default:
+            fprintf(stderr, "***INVALID DIRECTION %d GIVEN\n", direction);
+            break;
+    }
+    return result;
+}
+    
+
+static void determine_move_from_neighbors(day_23_elf_t * elf, day_23_direction_list_t * directions)
 {
     // first - if no neighbors set, stay put
     if ((elf->elf_neighbors[ELF_NEIGHBOR_N]  == FALSE) &&
@@ -107,63 +179,27 @@ static void determine_move_from_neighbors(day_23_elf_t * elf)
         printf("Elf at row=%d, col=%d has no neighbors and will stay put at row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
 #endif
     }
-    // next check north
-    else if ((elf->elf_neighbors[ELF_NEIGHBOR_N]  == FALSE) &&
-             (elf->elf_neighbors[ELF_NEIGHBOR_NE] == FALSE) &&
-             (elf->elf_neighbors[ELF_NEIGHBOR_NW] == FALSE))
-    {
-        elf->proposed_direction = DAY_23_DIRECTION_NORTH;
-        elf->proposed_x = elf->pos_x;
-        elf->proposed_y = elf->pos_y - 1;
-#ifdef DEBUG_DAY_23
-        printf("Elf at row=%d, col=%d will propose to move North to row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
-#endif
-    }
-    // next check south
-    else if ((elf->elf_neighbors[ELF_NEIGHBOR_S]  == FALSE) &&
-             (elf->elf_neighbors[ELF_NEIGHBOR_SE] == FALSE) &&
-             (elf->elf_neighbors[ELF_NEIGHBOR_SW] == FALSE))
-    {
-        elf->proposed_direction = DAY_23_DIRECTION_SOUTH;
-        elf->proposed_x = elf->pos_x;
-        elf->proposed_y = elf->pos_y + 1;
-#ifdef DEBUG_DAY_23
-        printf("Elf at row=%d, col=%d will propose to move South to row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
-#endif
-    }
-    // next check west
-    else if ((elf->elf_neighbors[ELF_NEIGHBOR_W]  == FALSE) &&
-             (elf->elf_neighbors[ELF_NEIGHBOR_NW] == FALSE) &&
-             (elf->elf_neighbors[ELF_NEIGHBOR_SW] == FALSE))
-    {
-        elf->proposed_direction = DAY_23_DIRECTION_WEST;
-        elf->proposed_x = elf->pos_x - 1;
-        elf->proposed_y = elf->pos_y;
-#ifdef DEBUG_DAY_23
-        printf("Elf at row=%d, col=%d will propose to move West to row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
-#endif
-    }
-    // next check east
-    else if ((elf->elf_neighbors[ELF_NEIGHBOR_E]  == FALSE) &&
-             (elf->elf_neighbors[ELF_NEIGHBOR_NE] == FALSE) &&
-             (elf->elf_neighbors[ELF_NEIGHBOR_SE] == FALSE))
-    {
-        elf->proposed_direction = DAY_23_DIRECTION_EAST;
-        elf->proposed_x = elf->pos_x + 1;
-        elf->proposed_y = elf->pos_y;
-#ifdef DEBUG_DAY_23
-        printf("Elf at row=%d, col=%d will propose to move East to row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
-#endif
-    }
-    // last - no move
     else
     {
-        elf->proposed_direction = DAY_23_DIRECTION_STAY;
-        elf->proposed_x = elf->pos_x;
-        elf->proposed_y = elf->pos_y;
+        // has some neighbors. loop over direction list to see what to do
+        int did_match_direction = FALSE;
+        for (int i=0; i<4; i++)
+        {
+            did_match_direction = validate_direction_and_calulate_move(elf, directions->directions[i]);
+            if (did_match_direction == TRUE)
+            {
+                break;
+            }
+        }
+        if (did_match_direction == FALSE)
+        {
+            elf->proposed_direction = DAY_23_DIRECTION_STAY;
+            elf->proposed_x = elf->pos_x;
+            elf->proposed_y = elf->pos_y;
 #ifdef DEBUG_DAY_23
-        printf("Elf at row=%d, col=%d has no moves and will stay put at row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
+            printf("Elf at row=%d, col=%d has no moves and will stay put at row=%d, col=%d\n", elf->pos_y, elf->pos_x, elf->proposed_y, elf->proposed_x);
 #endif
+        }
     }
     return;
 }
@@ -216,7 +252,7 @@ static void move_elf(day_23_elf_t * elf, aoc_screen_t * map)
     return;
 }
 
-void play_round(day_23_elves_t * elves, aoc_screen_t * map)
+void play_round(day_23_elves_t * elves, aoc_screen_t * map, day_23_direction_list_t * directions)
 {
 #ifdef DEBUG_DAY_23
     printf("Playing a round\n");
@@ -225,7 +261,7 @@ void play_round(day_23_elves_t * elves, aoc_screen_t * map)
     for (int i=0; i<elves->num_elves; i++)
     {
         find_elf_neighbors(&elves->elves[i], map);
-        determine_move_from_neighbors(&elves->elves[i]);
+        determine_move_from_neighbors(&elves->elves[i], directions);
     }
     
     // second step - remove colliding moves and then perform moves
@@ -322,10 +358,25 @@ static int calculate_empty_in_region(day_23_elves_t * elves)
     return ((max_x - min_x + 1)*(max_y - min_y + 1))-elves->num_elves;
 }
 
+void advance_direction_list(day_23_direction_list_t * directions)
+{
+    int temp = directions->directions[0];
+    directions->directions[0] = directions->directions[1];
+    directions->directions[1] = directions->directions[2];
+    directions->directions[2] = directions->directions[3];
+    directions->directions[3] = temp;
+}
+
 void day_23_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     day_23_elves_t elves;
     aoc_screen_t map;
+    day_23_direction_list_t directions;
+    directions.directions[0] = DAY_23_DIRECTION_NORTH;
+    directions.directions[1] = DAY_23_DIRECTION_SOUTH;
+    directions.directions[2] = DAY_23_DIRECTION_WEST;
+    directions.directions[3] = DAY_23_DIRECTION_EAST;
+    
 
     if (parse_input(filename, &map) != TRUE)
     {
@@ -343,12 +394,13 @@ void day_23_part_1(char * filename, extra_args_t * extra_args, char * result)
 
     for (int i=0; i<10; i++)
     {
-        play_round(&elves, &map);
+        play_round(&elves, &map, &directions);
         check_and_expand_map(&map);
 #ifdef DEBUG_DAY_23
         printf("After round %d:\n", i+1);
         display_screen(&map);
 #endif
+        advance_direction_list(&directions);
     }
 
 

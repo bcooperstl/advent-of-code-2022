@@ -108,3 +108,4 @@
 24,1,test_cases/day24_test1.txt,18
 24,1,day24_input.txt,283
 24,2,test_cases/day24_test1.txt,54
+24,2,day24_input.txt,883

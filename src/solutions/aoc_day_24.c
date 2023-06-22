@@ -460,7 +460,7 @@ void day_24_part_2(char * filename, extra_args_t * extra_args, char * result)
     
     copy_map(&current_map, &init_map);
     // start the start point at row 0, col 1
-    current_map.data[0][1] == PATH;
+    current_map.data[0][1] = PATH;
     
     // we are searching for last row, second to last column
     int target_row = init_map.num_rows-1;

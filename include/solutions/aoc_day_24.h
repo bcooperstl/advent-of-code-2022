@@ -27,6 +27,6 @@ struct day_24_map_component_permutations
 typedef struct day_24_map_component_permutations day_24_map_component_permutations_t;
 
 void day_24_part_1(char * forestname, extra_args_t * extra_args, char * result);
-//void day_24_part_2(char * forestname, extra_args_t * extra_args, char * result);
+void day_24_part_2(char * forestname, extra_args_t * extra_args, char * result);
 
 #endif

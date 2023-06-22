@@ -13,6 +13,7 @@
 #define UP_DOWN '|'
 #define LEFT_RIGHT '-'
 #define EMPTY '.'
+#define PATH 'E'
 
 static void read_and_parse_input(char * filename, day_24_map_t * init_map)
 {
@@ -326,7 +327,66 @@ static void create_map_for_minute(day_24_map_t * target, day_24_map_component_pe
 #endif
     return;
 }
-        
+
+static void expand_paths(day_24_map_t * next_map, day_24_map_t * prev_map_with_paths)
+{
+#ifdef DEBUG_DAY_24
+    printf("Expanding paths from prior Map:\n");
+    display_map(prev_map_with_paths);
+    printf("Into target map:\n");
+    display_map(next_map);
+#endif
+
+    // First - check the start position at row=0, col=1 to see if we can expand down and also to stay at the start
+    next_map->data[0][1] = PATH;
+    if (next_map->data[1][1] == EMPTY)
+    {
+        next_map->data[1][1] = PATH;
+    }
+    
+    // Look through every reachable location in prev_map_with_paths to find PATH elements. 
+    // When a PATH is found, check self, up, down, left, right in next_map->and expand to any open spaces
+    for (int prev_row=1; prev_row < prev_map_with_paths->num_rows-1; prev_row++)
+    {
+        for (int prev_col=1; prev_col < prev_map_with_paths->num_cols-1; prev_col++)
+        {
+            if (prev_map_with_paths->data[prev_row][prev_col] == PATH)
+            {
+                // self
+                if (next_map->data[prev_row][prev_col] == EMPTY)
+                {
+                    next_map->data[prev_row][prev_col] = PATH;
+                }
+                // up
+                if (next_map->data[prev_row-1][prev_col] == EMPTY)
+                {
+                    next_map->data[prev_row-1][prev_col] = PATH;
+                }
+                // down
+                if (next_map->data[prev_row+1][prev_col] == EMPTY)
+                {
+                    next_map->data[prev_row+1][prev_col] = PATH;
+                }
+                // left
+                if (next_map->data[prev_row][prev_col-1] == EMPTY)
+                {
+                    next_map->data[prev_row][prev_col-1] = PATH;
+                }
+                // right
+                if (next_map->data[prev_row][prev_col+1] == EMPTY)
+                {
+                    next_map->data[prev_row][prev_col+1] = PATH;
+                }
+            }
+        }
+    }
+#ifdef DEBUG_DAY_24
+    printf("After combining:\n");
+    display_map(next_map);
+#endif
+    return;
+}
+
 void day_24_part_1(char * filename, extra_args_t * extra_args, char * result)
 {
     day_24_map_t init_map;
@@ -341,14 +401,27 @@ void day_24_part_1(char * filename, extra_args_t * extra_args, char * result)
 
     build_permutations(&component_permutations, &init_map);
     
+    day_24_map_t current_map;
     day_24_map_t next_map;
     
-    for (int i=1; i<=5; i++)
+    copy_map(&current_map, &init_map);
+    // start the start point at row 0, col 1
+    current_map.data[0][1] == PATH;
+    
+    // we are searching for last row, second to last column
+    int target_row = init_map.num_rows-1;
+    int target_col = init_map.num_cols-2;
+    
+    int num_minutes = 0;
+    while (current_map.data[target_row][target_col] != PATH)
     {
-        create_map_for_minute(&next_map, &component_permutations, i);
+        num_minutes++;
+        create_map_for_minute(&next_map, &component_permutations, num_minutes);
+        expand_paths(&next_map, &current_map);
+        copy_map(&current_map, &next_map);
     }
         
-    snprintf(result, MAX_RESULT_LENGTH+1, "%d", 0);
+    snprintf(result, MAX_RESULT_LENGTH+1, "%d", num_minutes);
 
     return;
 }

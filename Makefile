@@ -3,7 +3,7 @@ DEBUG=
 #DEBUG+= -DDEBUG_RUNNER
 #Template for other debug flags to be added later
 #DEBUG+=  -DDEBUG_DAY_16 -DDEBUG_DAY_16_PARSE -DDEBUG_DAY_16_BFS -DDEBUG_DAY_16_DISTANCES
-#DEBUG+=  -DDEBUG_DAY_23
+DEBUG+=  -DDEBUG_DAY_24
 
 #If adding another include directory, be sure to add it here
 CFLAGS=-g ${DEBUG} -Iinclude/common -Iinclude/runner -Iinclude/screen -Iinclude/solutions
@@ -173,6 +173,11 @@ build/solutions/aoc_day_23.o: src/solutions/aoc_day_23.c  \
 	include/common/constants.h
 	gcc ${CFLAGS} -o build/solutions/aoc_day_23.o -c src/solutions/aoc_day_23.c
 
+build/solutions/aoc_day_24.o: src/solutions/aoc_day_24.c  \
+	include/solutions/aoc_day_24.h \
+	include/common/constants.h
+	gcc ${CFLAGS} -o build/solutions/aoc_day_24.o -c src/solutions/aoc_day_24.c
+
 bin/lib/libsolutions.a: build/solutions/aoc_solutions.o  \
 	build/solutions/aoc_day_1.o \
 	build/solutions/aoc_day_2.o \
@@ -197,6 +202,7 @@ bin/lib/libsolutions.a: build/solutions/aoc_solutions.o  \
 	build/solutions/aoc_day_21.o \
 	build/solutions/aoc_day_22.o \
 	build/solutions/aoc_day_23.o \
+	build/solutions/aoc_day_24.o \
 	build/solutions/aoc_day_0.o
 	ar rcs bin/lib/libsolutions.a $^
 
@@ -246,6 +252,7 @@ clean:
 	build/solutions/aoc_day_21.o \
 	build/solutions/aoc_day_22.o \
 	build/solutions/aoc_day_23.o \
+	build/solutions/aoc_day_24.o \
 	build/aoc.o  \
 	bin/lib/librunner.a  \
 	bin/lib/libscreen.a  \
@@ -282,6 +289,7 @@ all: build/runner/file_utils.o  \
 	build/solutions/aoc_day_21.o \
 	build/solutions/aoc_day_22.o \
 	build/solutions/aoc_day_23.o \
+	build/solutions/aoc_day_24.o \
 	build/aoc.o  \
 	bin/lib/librunner.a  \
 	bin/lib/libscreen.a  \
